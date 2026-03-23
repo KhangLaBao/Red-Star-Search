@@ -8,6 +8,16 @@
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
   </head>
   <body>
+<div class="topbar">
+  <a href="https://www.youtube.com" target="_blank">YouTube</a>
+  <a href="https://news.google.com" target="_blank">News</a>
+  <a href="https://mail.google.com" target="_blank">Mail</a>
+  <a href="https://calendar.google.com" target="_blank">Calendar</a>
+
+  <span class="topbar-right">
+    Hello, Comrade <span id="usernameDisplay">Guest</span>
+  </span>
+</div>
     <center>
     <table width="100%" height="100%">
   <tr>
@@ -65,112 +75,170 @@
 </html>
 
 <script>
+(function () {
+
+  // =========================
+  // 🟥 TITLE SYSTEM
+  // =========================
   const query = new URLSearchParams(window.location.search).get('q');
-  if (query) {
-    // This makes it look very friendly and enthusiastic!
-    document.title = query + " — Glorious Red Star! 🌟";
-  } else {
-    document.title = "Welcome, Comrade! — Red Star Search! 🚩";
-  }
+  document.title = query 
+    ? query + " — Glorious Red Star! 🌟"
+    : "Welcome, Comrade! — Red Star Search 🚩";
 
-  
-  // Hàm để thay đổi dòng trạng thái của Google
-  function polishResultsStats() {
-    // Tìm thẻ chứa thông tin kết quả của Google (thường có class là .gsc-result-info)
-    const statsElement = document.querySelector('.gsc-result-info');
 
-    if (statsElement && !statsElement.getAttribute('data-modified')) {
-      const originalText = statsElement.innerText; // Ví dụ: "About 5,740 results (0.44 seconds)"
-      
-      // Dùng Regex để lấy ra số lượng kết quả và thời gian
-      const matches = originalText.match(/([\d,]+).*\(([\d.]+).*\)/);
-      
-      if (matches) {
-        const count = matches[1];
-        const time = matches[2];
-        
-        // --- THAY ĐỔI CÂU CHÀO TẠI ĐÂY ---
-        statsElement.innerHTML = `🌟 <b>Report:</b> ${count} glorious results found for the People in ${time} seconds!`;
-        
-        // Đánh dấu để không bị lặp lại
-        statsElement.setAttribute('data-modified', 'true');
-        
-        // Thêm chút CSS cho nó tươi tắn
-        statsElement.style.color = "#d93025"; // Màu đỏ nhiệt huyết
-        statsElement.style.fontSize = "14px";
-        statsElement.style.fontWeight = "bold";
-      }
+  // =========================
+  // 🟡 CLEAN STATS FIX (STABLE)
+  // =========================
+  function fixStats() {
+    const el = document.querySelector('.gsc-result-info');
+
+    if (!el || el.dataset.done) return;
+
+    const text = el.innerText;
+    const nums = text.match(/[\d,.]+/g);
+
+    if (nums && nums.length >= 2) {
+      const count = nums[0];
+      const time = nums[nums.length - 1];
+
+      el.innerHTML = `🌟 <b>Report:</b> ${count} glorious results found for the People in ${time} seconds!`;
+
+      el.style.color = "#d93025";
+      el.style.fontWeight = "bold";
+      el.style.fontFamily = "Arial";
+
+      el.dataset.done = "1";
     }
   }
 
-  // Chạy kiểm tra liên tục mỗi 0.5 giây vì Google nạp kết quả bất đối xứng
-  setInterval(polishResultsStats, 500);
+  setInterval(fixStats, 500);
 
-  function polishRedStarBottom() {
-    // 1. Thay đổi dòng chữ tìm kiếm dưới cùng (Gợi ý 1)
-    const contextLink = document.querySelector('.gsc-context-box .gsc-search-context');
-    const query = new URLSearchParams(window.location.search).get('q');
-    
-    if (contextLink && !contextLink.getAttribute('data-modified')) {
-      contextLink.innerHTML = `🌟 Keep searching for "<b>${query}</b>" with Red Star!`;
-      contextLink.setAttribute('data-modified', 'true');
-      contextLink.style.fontFamily = "Arial";
-      contextLink.style.color = "#d93025"; // Màu đỏ rực rỡ
-    }
 
-    // 2. Thay đổi phần phân trang thành "R-e-e-e-e-d Star!" (Kiểu 1)
-    const cursorBox = document.querySelector('.gsc-cursor-box');
-    if (cursorBox && !cursorBox.getAttribute('data-red-star')) {
-      const pages = cursorBox.querySelectorAll('.gsc-cursor-page');
-      
-      // Tạo chữ "R" ở đầu
-      const rStart = document.createElement('span');
-      rStart.innerHTML = "R-";
-      rStart.style.fontWeight = "bold";
-      rStart.style.fontSize = "18px";
-      cursorBox.insertBefore(rStart, cursorBox.firstChild);
+  // =========================
+  // 🔴 R-e-e-e-e-d Star FIX
+  // =========================
+  function fixPagination() {
+    const boxes = document.querySelectorAll('.gsc-cursor-box');
 
-      // Biến mỗi con số thành chữ "e"
-      pages.forEach((page) => {
-        page.innerHTML = "e-"; 
-        page.style.textDecoration = "none";
-        page.style.fontWeight = "bold";
-        page.style.fontSize = "18px";
+    boxes.forEach(box => {
+      if (box.dataset.done) return;
+
+      const pages = box.querySelectorAll('.gsc-cursor-page');
+      if (pages.length === 0) return;
+
+      box.innerHTML = "";
+
+      const container = document.createElement("span");
+      container.style.fontWeight = "bold";
+      container.style.fontSize = "18px";
+
+      container.append("R-");
+
+      pages.forEach(p => {
+        const a = document.createElement("a");
+        a.href = p.href;
+        a.innerText = "e-";
+        a.style.margin = "0 2px";
+        a.style.textDecoration = "none";
+        a.style.color = "#1122cc";
+        container.appendChild(a);
       });
 
-      // Tạo chữ "d Star!" ở cuối
-      const dEnd = document.createElement('span');
-      dEnd.innerHTML = "d Star! 🌟";
-      dEnd.style.fontWeight = "bold";
-      dEnd.style.fontSize = "18px";
-      cursorBox.appendChild(dEnd);
+      container.append("d Star! 🌟");
 
-      cursorBox.setAttribute('data-red-star', 'true');
-    }
+      box.appendChild(container);
+      box.dataset.done = "1";
+    });
   }
 
-  // Chạy kiểm tra mỗi 0.5 giây
-  setInterval(polishRedStarBottom, 500);
+  setInterval(fixPagination, 500);
 
-    function showWelcomeMessage() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const query = urlParams.get('q');
-    const resultsBox = document.querySelector('.results-border-box');
 
-    // Nếu không có từ khóa hoặc từ khóa rỗng
-    if (!query || query.trim() === "") {
-      // Xóa nội dung cũ (nếu có) và chèn lời chào
-      resultsBox.innerHTML = `
+  // =========================
+  // 🟢 WELCOME MESSAGE
+  // =========================
+  function showWelcome() {
+    const q = new URLSearchParams(window.location.search).get('q');
+    const box = document.querySelector('.results-border-box');
+
+    if (!q && box) {
+      box.innerHTML = `
         <div class="welcome-container">
           <h1>Welcome, Comrade! 🌟</h1>
-          <p>The Red Star is ready to guide your search for knowledge.</p>
-          <p class="hint">Type something in the bar above to start our glorious quest! 🚩</p>
+          <p>The Red Star is ready to guide your search.</p>
+          <p class="hint">Type something above to begin 🚩</p>
           <div class="star-icon">★</div>
         </div>
       `;
     }
   }
 
-  // Chạy ngay khi trang load
-  window.onload = showWelcomeMessage;
+  window.onload = showWelcome;
+
+
+  // =========================
+  // 👤 USERNAME SYSTEM (FIXED)
+  // =========================
+  const span = document.getElementById("usernameDisplay");
+  if (!span) return;
+
+  function enableEdit(el) {
+    el.onclick = function () {
+      const input = document.createElement("input");
+      input.value = el.innerText;
+      input.style.fontSize = "13px";
+      input.style.border = "1px solid #666";
+
+      el.replaceWith(input);
+      input.focus();
+
+      function save() {
+        const name = input.value.trim() || "Guest";
+
+        localStorage.setItem("rss_username", name);
+
+        const newSpan = document.createElement("span");
+        newSpan.id = "usernameDisplay";
+        newSpan.innerText = name;
+        newSpan.style.cursor = "pointer";
+
+        input.replaceWith(newSpan);
+        enableEdit(newSpan);
+      }
+
+      input.onblur = save;
+      input.onkeydown = e => {
+        if (e.key === "Enter") save();
+      };
+    };
+  }
+
+  // load saved name
+  const saved = localStorage.getItem("rss_username");
+  if (saved) span.innerText = saved;
+
+  enableEdit(span);
+
+  function fixStats() {
+  const el = document.querySelector('.gsc-result-info');
+  if (!el) return;
+
+  const text = el.innerText;
+  const nums = text.match(/[\d,.]+/g);
+
+  if (nums && nums.length >= 2) {
+    const count = nums[0];
+    const time = nums[nums.length - 1];
+
+    el.innerHTML = `🌟 <b>Report:</b> ${count} glorious results found for the People in ${time} seconds!`;
+
+    el.style.color = "#d93025";
+    el.style.fontWeight = "bold";
+    el.style.fontFamily = "Arial";
+  }
+}
+
+// 🔥 run VERY often to fight Google reload
+setInterval(fixStats, 300);
+})();
 </script>

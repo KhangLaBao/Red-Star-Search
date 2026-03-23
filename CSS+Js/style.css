@@ -440,3 +440,28 @@ body, input, button, div {
     margin-bottom: 18px;
 }
 
+.topbar {
+  width: 100%;
+  background: #f2f2f2;
+  border-bottom: 1px solid #999;
+  padding: 6px 10px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.topbar a {
+  color: #1122cc;
+  text-decoration: none;
+  margin-right: 15px;
+}
+
+.topbar a:hover {
+  text-decoration: underline;
+  color: #ff0000;
+}
+
+.topbar-right {
+  float: right;
+  color: #333;
+  cursor: pointer;
+}
