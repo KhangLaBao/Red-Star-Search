@@ -1,0 +1,97 @@
+/* Thiết lập chung */
+body {
+    background-color: #e5e5e5; /* Màu nền xám bạn yêu cầu */
+    font-family: "Times New Roman", Times, serif !important;
+    margin: 0;
+    padding: 0;
+}
+
+/* Thanh điều hướng Web, Images trên cùng */
+.top-nav {
+    background: #fff;
+    padding: 10px 0 0 160px;
+    border-bottom: 1px solid #ccc;
+    font-size: 13px;
+}
+.top-nav span {
+    margin-right: 15px;
+    padding-bottom: 5px;
+    display: inline-block;
+    color: #1122cc;
+    cursor: pointer;
+}
+.top-nav span.active {
+    color: #000;
+    font-weight: bold;
+    border-bottom: 3px solid #dd4b39;
+}
+
+/* Bố cục chia cột */
+.main-wrapper {
+    display: flex;
+    max-width: 1000px;
+    margin-top: 20px;
+}
+
+.sidebar {
+    width: 150px;
+    padding-left: 10px;
+    font-size: 13px;
+}
+
+.content-results {
+    flex: 1;
+    background-color: transparent;
+    padding-left: 20px;
+}
+
+/* --- HACK GOOGLE CSE --- */
+
+/* Tiêu đề kết quả (Xanh dương) */
+.gs-title, .gs-title * {
+    color: #1122cc !important;
+    text-decoration: underline !important;
+    font-size: 18px !important;
+    font-family: "Times New Roman", Times, serif !important;
+}
+
+/* Đường dẫn URL (Xanh lá) */
+.gs-visibleUrl {
+    color: #008000 !important;
+    font-style: normal !important;
+    font-size: 14px !important;
+}
+
+/* Đoạn nội dung tóm tắt (Đen) */
+.gs-snippet {
+    color: #222 !important;
+    line-height: 1.4 !important;
+    font-size: 14px !important;
+}
+
+/* Xóa khung viền hiện đại của Google */
+.gsc-control-cse {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.gsc-webResult {
+    background-color: transparent !important;
+    border: none !important;
+    margin-bottom: 20px !important;
+}
+
+/* Định dạng thanh search ở trang kết quả */
+.search-input {
+    width: 400px;
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+}
+.search-btn {
+    padding: 5px 15px;
+    background: #f8f8f8;
+    border: 1px solid #bbb;
+    cursor: pointer;
+}

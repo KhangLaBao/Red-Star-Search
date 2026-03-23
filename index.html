@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Glorious Web Search</title>
+    <link rel="stylesheet" href="CSS+Js/style.css" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+  </head>
+  <body>
+    <center>
+    <table width="100%" height="100%">
+  <tr>
+    <td align="center" valign="middle">
+
+      <!-- YOUR CONTENT START -->
+      
+      <h1 class="logo-text">
+        🌟 Red Star Search!
+      </h1>
+
+      <!-- index.html -->
+<img src="imgs/logo.png" alt="" class="logo-img">
+
+<div class="search-container">
+  <!-- Sửa action trỏ đến file kết quả của bạn -->
+  <form action="results.html" method="get">
+    <!-- Phải giữ nguyên input hidden CX để Google nhận diện bộ máy của bạn -->
+    <input type="hidden" name="cx" value="c5ed00b64fd0146ff" />
+    
+    <table cellspacing="0" cellpadding="0">
+      <tr>
+        <td>
+          <input type="text" name="q" placeholder="Search the entire web..." style="
+            width: 250px;
+            padding: 6px;
+            border: 1px solid #666;
+            box-shadow: inset 0 1px 2px #bbb;">
+            
+        </td>
+        <td style="padding-left: 12px">
+          <button type="submit" style="
+            padding: 6px 12px;
+            border: 1px solid #444;
+            background: linear-gradient(to bottom, #f8f8f8, #c0c0c0);
+            box-shadow: inset 0 1px 0 #fff;
+            cursor: pointer;
+            font-size: 14px;">
+            <strong>Search</strong>
+          </button>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
+
+
+      <!-- YOUR CONTENT END -->
+
+    </td>
+  </tr>
+</table>
+    </center>
+  </body>
+</html>
+
+<script>
+  const query = new URLSearchParams(window.location.search).get('q');
+  if (query) {
+    // This makes it look very friendly and enthusiastic!
+    document.title = query + " — Glorious Red Star! 🌟";
+  } else {
+    document.title = "Welcome, Comrade! — Red Star Search! 🚩";
+  }
+
+  
+  // Hàm để thay đổi dòng trạng thái của Google
+  function polishResultsStats() {
+    // Tìm thẻ chứa thông tin kết quả của Google (thường có class là .gsc-result-info)
+    const statsElement = document.querySelector('.gsc-result-info');
+
+    if (statsElement && !statsElement.getAttribute('data-modified')) {
+      const originalText = statsElement.innerText; // Ví dụ: "About 5,740 results (0.44 seconds)"
+      
+      // Dùng Regex để lấy ra số lượng kết quả và thời gian
+      const matches = originalText.match(/([\d,]+).*\(([\d.]+).*\)/);
+      
+      if (matches) {
+        const count = matches[1];
+        const time = matches[2];
+        
+        // --- THAY ĐỔI CÂU CHÀO TẠI ĐÂY ---
+        statsElement.innerHTML = `🌟 <b>Report:</b> ${count} glorious results found for the People in ${time} seconds!`;
+        
+        // Đánh dấu để không bị lặp lại
+        statsElement.setAttribute('data-modified', 'true');
+        
+        // Thêm chút CSS cho nó tươi tắn
+        statsElement.style.color = "#d93025"; // Màu đỏ nhiệt huyết
+        statsElement.style.fontSize = "14px";
+        statsElement.style.fontWeight = "bold";
+      }
+    }
+  }
+
+  // Chạy kiểm tra liên tục mỗi 0.5 giây vì Google nạp kết quả bất đối xứng
+  setInterval(polishResultsStats, 500);
+
+  function polishRedStarBottom() {
+    // 1. Thay đổi dòng chữ tìm kiếm dưới cùng (Gợi ý 1)
+    const contextLink = document.querySelector('.gsc-context-box .gsc-search-context');
+    const query = new URLSearchParams(window.location.search).get('q');
+    
+    if (contextLink && !contextLink.getAttribute('data-modified')) {
+      contextLink.innerHTML = `🌟 Keep searching for "<b>${query}</b>" with Red Star!`;
+      contextLink.setAttribute('data-modified', 'true');
+      contextLink.style.fontFamily = "Arial";
+      contextLink.style.color = "#d93025"; // Màu đỏ rực rỡ
+    }
+
+    // 2. Thay đổi phần phân trang thành "R-e-e-e-e-d Star!" (Kiểu 1)
+    const cursorBox = document.querySelector('.gsc-cursor-box');
+    if (cursorBox && !cursorBox.getAttribute('data-red-star')) {
+      const pages = cursorBox.querySelectorAll('.gsc-cursor-page');
+      
+      // Tạo chữ "R" ở đầu
+      const rStart = document.createElement('span');
+      rStart.innerHTML = "R-";
+      rStart.style.fontWeight = "bold";
+      rStart.style.fontSize = "18px";
+      cursorBox.insertBefore(rStart, cursorBox.firstChild);
+
+      // Biến mỗi con số thành chữ "e"
+      pages.forEach((page) => {
+        page.innerHTML = "e-"; 
+        page.style.textDecoration = "none";
+        page.style.fontWeight = "bold";
+        page.style.fontSize = "18px";
+      });
+
+      // Tạo chữ "d Star!" ở cuối
+      const dEnd = document.createElement('span');
+      dEnd.innerHTML = "d Star! 🌟";
+      dEnd.style.fontWeight = "bold";
+      dEnd.style.fontSize = "18px";
+      cursorBox.appendChild(dEnd);
+
+      cursorBox.setAttribute('data-red-star', 'true');
+    }
+  }
+
+  // Chạy kiểm tra mỗi 0.5 giây
+  setInterval(polishRedStarBottom, 500);
+
+    function showWelcomeMessage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get('q');
+    const resultsBox = document.querySelector('.results-border-box');
+
+    // Nếu không có từ khóa hoặc từ khóa rỗng
+    if (!query || query.trim() === "") {
+      // Xóa nội dung cũ (nếu có) và chèn lời chào
+      resultsBox.innerHTML = `
+        <div class="welcome-container">
+          <h1>Welcome, Comrade! 🌟</h1>
+          <p>The Red Star is ready to guide your search for knowledge.</p>
+          <p class="hint">Type something in the bar above to start our glorious quest! 🚩</p>
+          <div class="star-icon">★</div>
+        </div>
+      `;
+    }
+  }
+
+  // Chạy ngay khi trang load
+  window.onload = showWelcomeMessage;
+</script>

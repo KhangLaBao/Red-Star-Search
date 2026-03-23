@@ -1,0 +1,442 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing: border-box;
+}
+
+body, input, button, div, span 
+{
+    font-family:Arial, Helvetica, sans-serif
+    }   
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: #e5e5e5;
+  margin: 0; /* removes default top gap */
+}
+
+/* ---------- Search container (less rounded) ---------- */
+.search-container {
+  display: inline-block;
+  background: #e5e5ea;
+  border: 1px solid #999;
+  padding: 10px;
+}
+
+/* ---------- Search input (RECTANGLE STYLE) ---------- */
+.search-container input[type="text"] {
+  width: 70%;
+  padding: 6px;
+  border: 1px solid #666;
+  font-size: 14px;
+  outline: none;
+  
+  
+  /* subtle inset (old style depth) */
+  box-shadow: inset 0 1px 2px #bbb;
+}
+
+
+/* ---------- Search button (OLD GLOSSY) ---------- */
+.search-container button {
+  padding: 6px 12px;
+  border: 1px solid #444;
+  background: #d0d0d0; /* fallback */
+  background: linear-gradient(to bottom, #f8f8f8, #c0c0c0);
+  color: black;
+  font-size: 14px;
+  cursor: pointer;
+
+  /* glossy top shine */
+  box-shadow: inset 0 1px 0 #ffffff;
+}
+
+/* ---------- Button press effect (IMPORTANT 😎) ---------- */
+.search-container button:active {
+  background: linear-gradient(to bottom, #c0c0c0, #f8f8f8);
+  box-shadow: inset 0 2px 3px #999;
+}
+
+/* Keep them on same line */
+.search-container form {
+  white-space: nowrap;
+}
+
+/* Input stays inline */
+.search-container input[type="text"] {
+  display: inline-block;
+  vertical-align: middle;
+  width: 70%;
+}
+
+/* Button stays inline */
+.search-container button {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+body {
+  margin: 0;           /* remove default browser spacing */
+  padding: 10px 0 0 0; /* small top spacing */
+}
+
+/* logo image */
+.logo-img {
+  display: block;
+  margin: 0 auto 10px auto;
+}
+
+/* text logo */
+.logo-text {
+  font-size: 28px;
+  color: #cc0000;
+  text-align: center;
+  margin: 5px 0 10px 0;
+  font-weight: bold;
+
+  text-shadow: 
+    1px 1px 0 #800000,
+    2px 2px 0 #400000;
+}
+
+
+/* Tiêu đề kết quả (Xanh dương) */
+.gs-title, .gs-title * {
+    color: #1122cc !important;
+    text-decoration: underline !important;
+    font-size: 18px !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    }
+
+/* Đường dẫn URL (Xanh lá) */
+.gs-visibleUrl {
+    color: #008000 !important;
+    font-style: normal !important;
+    font-size: 14px !important;
+}
+
+/* Đoạn nội dung tóm tắt (Đen) */
+.gs-snippet {
+    color: #222 !important;
+    line-height: 1.4 !important;
+    font-size: 14px !important;
+}
+
+.gsc-control-cse {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+
+.search-input {
+    width: 400px;
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+}
+.search-btn {
+    padding: 5px 15px;
+    background: #f8f8f8;
+    border: 1px solid #bbb;
+    cursor: pointer;
+}
+
+
+
+.long-search-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #777;
+    font-size: 16px;
+}
+
+.glossy-search-btn {
+    padding: 8px 20px;
+    margin-left: 5px;
+    border: 1px solid #444;
+    font-weight: bold;
+    cursor: pointer;
+    background: linear-gradient(to bottom, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
+}
+
+/* 2. Khung viền đen */
+.results-border-box {
+    border: 1px solid #000 !important;
+    background-color: #fff;
+    padding: 15px;
+    min-height: 500px;
+}
+
+/* 3. STYLE CÁC TAB "WEB" VÀ "HÌNH ẢNH" BÊN TRONG GOOGLE */
+
+/* Xóa gạch dưới mặc định của Google */
+.gsc-tabsArea {
+    border-bottom: 2px solid #000 !important; /* Đường kẻ đen dưới tab */
+    margin-bottom: 20px !important;
+}
+
+/* Biến các Tab (Web, Hình ảnh) thành nút Glossy */
+.gsc-tabHeader {
+    border: 1px solid #999 !important;
+    padding: 8px 25px !important;
+    margin-right: 5px !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    background: linear-gradient(to bottom, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%) !important;
+}
+
+/* Khi tab đang được chọn (Active) */
+.gsc-tabHeader.gsc-tabhActive {
+    border: 1px solid #000 !important;
+    border-bottom: 2px solid #fff !important; /* Tạo cảm giác tab đè lên đường kẻ */
+    background: #fff !important;
+    color: #d93025 !important; /* Chữ đỏ cho tab đang chọn */
+}
+
+/* 4. Fix lỗi trắng trang: Ép kết quả hiển thị */
+.gsc-results-wrapper-visible {
+    display: block !important;
+    visibility: visible !important;
+}
+
+.gsc-control-cse {
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+}
+
+/* Style tiêu đề kết quả */
+.gs-title, .gs-title * {
+    color: rgb(16,33,206) !important;
+    text-decoration: underline !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+}
+
+
+
+/* 2. Cấu trúc khung 800px căn giữa */
+.polished-search-container {
+    background-color: #f2f2f2;
+    border: 1px solid #ababab;
+    padding: 8px;
+    width: 800px;
+    margin-top: 20px;
+    box-sizing: border-box;
+    text-align: left;
+    
+}
+
+.results-border-box {
+    border: 1px solid #000;
+    background-color: #fff;
+    width: 800px;
+    margin-top: 10px;
+    padding: 10px;
+    min-height: 600px;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+/* 3. Style Ô nhập liệu & Nút Glossy */
+.inner-input {
+    flex: 1;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid #7e7e7e;
+    font-size: 14px;
+}
+
+.inner-button {
+    height: 34px;
+    padding: 0 15px;
+    margin-left: 10px;
+    border: 1px solid #555;
+    font-weight: bold;
+    cursor: pointer;
+    background: linear-gradient(to bottom, #ffffff 0%, #e0e0e0 50%, #d0d0d0 51%, #e5e5e5 100%);
+}
+
+/* 4. FIX LỖI TRẮNG TRANG (QUAN TRỌNG) */
+.gsc-control-cse {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* 5. Style Tab nội bộ Google */
+.gsc-tabsArea {
+    border-bottom: 1px solid #000 !important;
+}
+
+.gsc-tabHeader {
+    padding: 6px 20px !important;
+    margin-right: 5px !important;
+    border: 1px solid #999 !important;
+    font-weight: bold !important;
+    background: linear-gradient(to bottom, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%) !important;
+}
+
+.gsc-tabHeader.gsc-tabhActive {
+    border: 1px solid #000 !important;
+    border-bottom: 2px solid #fff !important;
+    background: #fff !important;
+}
+
+/* Style tiêu đề kết quả */
+.gs-title, .gs-title * {
+    color: #1122cc !important;
+    text-decoration: underline !important;
+}
+
+/* Font Arial chuẩn */
+body, input, button, div {
+    font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* Thanh Search Bar */
+.legacy-search-container {
+    background-color: rgb(229, 229, 238);
+    border: 1px solid rgb(153, 153, 153);
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+/* Ô nhập liệu */
+.legacy-input {
+    width: 100%;
+    height: 32px;
+    border: 1px solid #666;
+    box-shadow: inset 0 1px 2px #bbb;
+    border: 1px solid rgb(102, 102, 102);
+    padding: 2px 8px;
+    font-size: 14px;
+}
+
+/* Nút bấm bóng bẩy */
+.legacy-glossy-button {
+    height: 32px;
+    padding: 0 15px;
+    border: 1px solid #555;
+    font-weight: bold;
+    cursor: pointer;
+    background: #e5e5e5;
+    background: linear-gradient(to bottom, #ffffff 0%, #e0e0e0 50%, #d0d0d0 51%, #e5e5e5 100%);
+}
+
+/* KHUNG VIỀN ĐEN KẾT QUẢ */
+.results-border-box {
+    border: 1px solid #000;
+    background-color: #fff;
+    padding: 10px;
+    min-height: 600px;
+    box-sizing: border-box;
+}
+
+/* QUAN TRỌNG: Ép Google CSE luôn rộng 100% bên trong viền đen */
+.gsc-control-cse {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Style tab Web/Hình ảnh của Google cho đồng bộ */
+.gsc-tabHeader {
+    border: 1px solid #ccc !important;
+    background: linear-gradient(to bottom, #fff 0%, #eee 100%) !important;
+}
+
+.gsc-tabHeader.gsc-tabhActive {
+    border: 1px solid #000 !important;
+    background: #fff !important;
+    font-weight: bold !important;
+    color: #d93025 !important; /* Chữ đỏ cho tab đang chọn */
+}
+
+/* Container của phần phân trang */
+.gsc-cursor-box {
+    margin-top: 30px !important;
+    padding: 15px !important;
+    border-top: 1px solid #ccc !important;
+    color: #d93025 !important; /* Màu đỏ chủ đạo */
+    font-family: Arial, sans-serif !important;
+}
+
+/* Các chữ "e" (tức là các số trang) */
+.gsc-cursor-page {
+    color: #1122cc !important; /* Màu xanh link cổ điển */
+    transition: all 0.2s;
+}
+
+/* Chữ "e" của trang hiện tại */
+.gsc-cursor-current-page {
+    color: #ff0000 !important;
+    font-size: 22px !important; /* Làm trang hiện tại to hơn hẳn */
+    text-shadow: 1px 1px 2px #ccc;
+}
+
+/* Hiệu ứng khi đồng chí di chuột qua các chữ e */
+.gsc-cursor-page:hover {
+    color: #ff0000 !important;
+    background-color: #ffd700 !important; /* Nền vàng ngôi sao */
+    border-radius: 4px;
+}
+
+.welcome-container {
+    text-align: center;
+    padding: 60px 20px;
+    color: #333;
+}
+
+.welcome-container h1 {
+    font-family: Arial, sans-serif;
+    color: #d93025; /* Màu đỏ nhiệt huyết */
+    font-size: 32px;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 0px #fff;
+}
+
+.welcome-container p {
+    font-size: 18px;
+    color: #555;
+    margin: 5px 0;
+}
+
+.welcome-container .hint {
+    font-style: italic;
+    color: #777;
+    margin-top: 20px;
+}
+
+.welcome-container .star-icon {
+    font-size: 80px;
+    color: #ffd700; /* Màu vàng ngôi sao */
+    margin-top: 30px;
+    text-shadow: 2px 2px 4px #ccc;
+    animation: pulse 2s infinite; /* Làm ngôi sao đập nhẹ cho sinh động */
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.gs-title:hover {
+    color: #ff0000 !important;
+}
+
+.gsc-result {
+    margin-bottom: 18px;
+}
+
