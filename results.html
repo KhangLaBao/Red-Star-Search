@@ -73,6 +73,27 @@
 </html>
 
 <script>
+   // =========================
+  // 🟢 WELCOME MESSAGE
+  // =========================
+  function showWelcome() {
+    const q = new URLSearchParams(window.location.search).get('q');
+    const box = document.querySelector('.results-border-box');
+
+    if (!q && box) {
+      box.innerHTML = `
+        <div class="welcome-container">
+          <h1>Welcome, Comrade! 🌟</h1>
+          <p>The Red Star is ready to guide your search.</p>
+          <p class="hint">Type something above to begin 🚩</p>
+          <div class="star-icon">★</div>
+        </div>
+      `;
+    }
+  }
+
+  window.onload = showWelcome;
+
 (function () {
 
   // =========================
