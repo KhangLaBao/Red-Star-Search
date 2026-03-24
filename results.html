@@ -113,41 +113,68 @@
 
 
   // =========================
-  // 🔴 R-e-e-e-e-d Star FIX
+  // 🔴 R e e e e d Star FIX
   // =========================
-  function fixPagination() {
-    const boxes = document.querySelectorAll('.gsc-cursor-box');
+function polishRedStarPretty() {
+  const cursorBoxes = document.querySelectorAll('.gsc-cursor-box');
 
-    boxes.forEach(box => {
-      if (box.dataset.done) return;
+  cursorBoxes.forEach(cursorBox => {
+    if (!cursorBox.getAttribute('data-red-star')) {
+      const pages = cursorBox.querySelectorAll('.gsc-cursor-page');
 
-      const pages = box.querySelectorAll('.gsc-cursor-page');
-      if (pages.length === 0) return;
+      if (pages.length > 0) {
 
-      box.innerHTML = "";
+        // Style the container
+        cursorBox.style.fontSize = "20px";
+        cursorBox.style.fontWeight = "bold";
+        cursorBox.style.textAlign = "center";
+        cursorBox.style.marginTop = "20px";
 
-      const container = document.createElement("span");
-      container.style.fontWeight = "bold";
-      container.style.fontSize = "18px";
+        // Add R-
+        const rStart = document.createElement('span');
+        rStart.innerText = "R ";
+        rStart.style.color = "#d93025";
+        cursorBox.insertBefore(rStart, cursorBox.firstChild);
 
-      container.append("R-");
+        // Style each "e"
+        pages.forEach(page => {
+          if (page.firstChild) {
+            page.firstChild.nodeValue = "e";
+          } else {
+            page.textContent = "e";
+          }
 
-      pages.forEach(p => {
-        const a = document.createElement("a");
-        a.href = p.href;
-        a.innerText = "e-";
-        a.style.margin = "0 2px";
-        a.style.textDecoration = "none";
-        a.style.color = "#1122cc";
-        container.appendChild(a);
-      });
+          // 👇 make them BIG and clickable
+          page.style.fontSize = "20px";
+          page.style.margin = "0 4px";
+          page.style.textDecoration = "none";
+          page.style.fontWeight = "bold";
+          page.style.color = "#1122cc"; // classic blue
+        });
 
-      container.append("d Star! 🌟");
+        // Current page highlight ⭐
+        const current = cursorBox.querySelector('.gsc-cursor-current-page');
+        if (current) {
+          current.style.color = "#ff0000";
+          current.style.fontSize = "24px";
+        }
 
-      box.appendChild(container);
-      box.dataset.done = "1";
-    });
-  }
+        // Add ending
+        const end = document.createElement('span');
+        end.innerText = " d Star! 🌟";
+        end.style.color = "#d93025";
+        cursorBox.appendChild(end);
+
+        cursorBox.setAttribute('data-red-star', 'true');
+      }
+    }
+  });
+}
+
+setInterval(polishRedStarPretty, 500);
+
+// run loop
+setInterval(polishRedStarSafe, 500);
 
   setInterval(fixPagination, 500);
 

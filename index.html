@@ -14,8 +14,8 @@
   <a href="https://mail.google.com" target="_blank">Mail</a>
   <a href="https://calendar.google.com" target="_blank">Calendar</a>
 
-  <span class="topbar-right">
-    Hello, Comrade <span id="usernameDisplay">Guest</span>
+  <span class="topbar-right" style="color:#0000EE">
+    Hello, Comrade <span id="usernameDisplay">Guest</span>!
   </span>
 </div>
     <center>
@@ -63,8 +63,44 @@
     </table>
   </form>
 </div>
-
-
+        <br>
+        <button type="submit" style="
+          padding: 6px 12px;
+          border: 1px solid #444;
+          width: 176px;
+          background: linear-gradient(to bottom, #f8f8f8, #c0c0c0);
+          box-shadow: inset 0 1px 0 #fff;
+          cursor: pointer;
+          font-size: 14px;">
+          Search!
+        </button>
+        <button type="button" onclick="goMobile()" style="
+          padding: 6px 12px;
+          border: 1px solid #444;
+          width: 176px;
+          background: linear-gradient(to bottom, #f8f8f8, #c0c0c0);
+          box-shadow: inset 0 1px 0 #fff;
+          cursor: pointer;
+          font-size: 14px;">
+          WAP (Mobile Version)!
+        </button>
+        <div class="info-text">
+          <p>Low bandwidth comrades? 📟</p>
+          <p>
+            For older devices and heroic slow internet, 
+            <a href="mobile/index.html">click "WAP (Mobile Version)!"</a>
+          </p>
+          <p class="tip">
+            Tip: You can change your name by clicking "Guest" n the Hello,Comrade Guest!.
+          </p>
+        </div>
+        <div class="lang-bar">
+          Red Star Search! supports those languages!:
+          <a href="#" onclick="fakeLang()">English</a> |
+          <a href="#" onclick="fakeLang()">Русский</a> |
+          <a href="#" onclick="fakeLang()">Tiếng Việt</a> |
+          <a href="#" onclick="fakeLang()">中文</a>
+        </div>
       <!-- YOUR CONTENT END -->
 
     </td>
@@ -115,43 +151,68 @@
 
 
   // =========================
-  // 🔴 R-e-e-e-e-d Star FIX
+  // 🔴 R e e e e d Star FIX
   // =========================
-  function fixPagination() {
-    const boxes = document.querySelectorAll('.gsc-cursor-box');
+ function polishRedStarPretty() {
+  const cursorBoxes = document.querySelectorAll('.gsc-cursor-box');
 
-    boxes.forEach(box => {
-      if (box.dataset.done) return;
+  cursorBoxes.forEach(cursorBox => {
+    if (!cursorBox.getAttribute('data-red-star')) {
+      const pages = cursorBox.querySelectorAll('.gsc-cursor-page');
 
-      const pages = box.querySelectorAll('.gsc-cursor-page');
-      if (pages.length === 0) return;
+      if (pages.length > 0) {
 
-      box.innerHTML = "";
+        // Style the container
+        cursorBox.style.fontSize = "20px";
+        cursorBox.style.fontWeight = "bold";
+        cursorBox.style.textAlign = "center";
+        cursorBox.style.marginTop = "20px";
 
-      const container = document.createElement("span");
-      container.style.fontWeight = "bold";
-      container.style.fontSize = "18px";
+        // Add R-
+        const rStart = document.createElement('span');
+        rStart.innerText = "R ";
+        rStart.style.color = "#d93025";
+        cursorBox.insertBefore(rStart, cursorBox.firstChild);
 
-      container.append("R-");
+        // Style each "e"
+        pages.forEach(page => {
+          if (page.firstChild) {
+            page.firstChild.nodeValue = "e";
+          } else {
+            page.textContent = "e";
+          }
 
-      pages.forEach(p => {
-        const a = document.createElement("a");
-        a.href = p.href;
-        a.innerText = "e-";
-        a.style.margin = "0 2px";
-        a.style.textDecoration = "none";
-        a.style.color = "#1122cc";
-        container.appendChild(a);
-      });
+          // 👇 make them BIG and clickable
+          page.style.fontSize = "20px";
+          page.style.margin = "0 4px";
+          page.style.textDecoration = "none";
+          page.style.fontWeight = "bold";
+          page.style.color = "#1122cc"; // classic blue
+        });
 
-      container.append("d Star! 🌟");
+        // Current page highlight ⭐
+        const current = cursorBox.querySelector('.gsc-cursor-current-page');
+        if (current) {
+          current.style.color = "#ff0000";
+          current.style.fontSize = "24px";
+        }
 
-      box.appendChild(container);
-      box.dataset.done = "1";
-    });
-  }
+        // Add ending
+        const end = document.createElement('span');
+        end.innerText = " d Star! 🌟";
+        end.style.color = "#d93025";
+        cursorBox.appendChild(end);
 
-  setInterval(fixPagination, 500);
+        cursorBox.setAttribute('data-red-star', 'true');
+      }
+    }
+  });
+}
+
+setInterval(polishRedStarPretty, 500);
+
+// run loop
+setInterval(polishRedStarSafe, 500);
 
 
   // =========================
@@ -241,4 +302,20 @@
 // 🔥 run VERY often to fight Google reload
 setInterval(fixStats, 300);
 })();
+
+
+function goMobile() {
+  var query = document.querySelector('input[name="q"]').value;
+
+  if (query.trim() !== "") {
+    window.location.href = "mobile/m-results.html?q=" + encodeURIComponent(query);
+  } else {
+    window.location.href = "mobile/m-index.html";
+  }
+}
+
+function fakeLang() {
+  alert("⚠️ Language pack not installed!\nPlease install Soviet Language Pack v1.0 🚩");
+}
+
 </script>

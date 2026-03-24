@@ -465,3 +465,38 @@ body, input, button, div {
   color: #333;
   cursor: pointer;
 }
+
+.info-text {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #555;
+  text-align: center;
+}
+
+.info-text a {
+  color: #1122cc;              /* classic blue link */
+  text-decoration: underline;
+}
+
+.info-text .tip {
+  margin-top: 8px;
+  font-style: italic;
+  color: #777;
+}
+.lang-bar {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.lang-bar a {
+  color: #1122cc;
+  text-decoration: underline;
+}
+
+.gsc-cursor-page:hover {
+  color: red !important;
+  background: #ffd700;
+  border-radius: 3px;
+}

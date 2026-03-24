@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Red Star Results</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* CSS ép kiểu cho trình duyệt cũ */
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .results-border { border: 1px solid #000; background: #ffffff; padding: 5px; margin: 5px; }
+    
+    /* Ép Google CSE không tràn màn hình */
+    .gsc-control-cse { padding: 0 !important; width: 100% !important; box-sizing: border-box; }
+    .gsc-webResult { width: 100% !important; word-wrap: break-word; }
+    .gs-title { font-size: 16px !important; color: #1122cc !important; }
+    .gs-snippet { font-size: 13px !important; }
+    
+    /* Pagination R-e-e-d */
+    .gsc-cursor-box { text-align: center !important; font-weight: bold; color: #cc0000; }
+  </style>
+</head>
+<body bgcolor="#e5e5e5">
+
+  <!-- TOP NAV -->
+  <table width="100%" cellpadding="5" border="0" bgcolor="#dcdcdc" style="border-bottom:1px solid #999;">
+    <tr>
+      <td align="left"><a href="m-index.html" style="color:#1122cc; font-family:Arial; font-size:12px;">&laquo; Home</a></td>
+      <td align="right"><font face="Arial" size="2" color="#cc0000"><b>🌟 Red Star</b></font></td>
+    </tr>
+  </table>
+
+  <!-- SEARCH AGAIN -->
+  <table width="98%" cellpadding="5" border="0">
+    <tr>
+      <td>
+        <form action="m-results.html" method="get">
+          <input type="hidden" name="cx" value="c5ed00b64fd0146ff">
+          <input type="text" id="searchBox" name="q" style="width:70%; height:25px; border:1px solid #666;">
+          <input type="submit" value="Go" style="width:20%; height:29px; font-weight:bold;">
+        </form>
+      </td>
+    </tr>
+  </table>
+
+  <!-- RESULTS BOX -->
+  <div class="results-border">
+    <script async src="https://cse.google.com/cse.js?cx=c5ed00b64fd0146ff"></script>
+    <div class="gcse-searchresults-only" data-queryParameterName="q"></div>
+  </div>
+
+<script>
+// Fix Stats & Pagination cho trình duyệt di động
+function polishMobile() {
+  const stats = document.querySelector('.gsc-result-info');
+  if (stats && !stats.getAttribute('fixed')) {
+    const nums = stats.innerText.match(/[\d,.]+/g);
+    if (nums && nums.length >= 2) {
+      stats.innerHTML = "🌟 " + nums[0] + " results (" + nums[nums.length-1] + "s)";
+      stats.style.color = "#cc0000";
+      stats.setAttribute('fixed','true');
+    }
+  }
+
+  const cursor = document.querySelector('.gsc-cursor-box');
+  if (cursor && !cursor.getAttribute('red')) {
+    cursor.innerHTML = "R-e-e-d Star! 🌟"; // Đơn giản hóa cho màn hình siêu nhỏ
+    cursor.setAttribute('red','true');
+  }
+}
+setInterval(polishMobile, 500);
+
+// Tự điền từ khóa vào ô tìm kiếm
+const q = new URLSearchParams(window.location.search).get('q');
+if (q) { document.getElementById("searchBox").value = q; }
+</script>
+
+</body>
+</html>
