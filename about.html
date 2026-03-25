@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>About — Red Star Search</title>
+
+  <link rel="stylesheet" href="CSS+Js/style.css">
+
+  <style>
+    body {
+      background: #e5e5e5;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 800px;
+      margin: 40px auto;
+      background: #fff;
+      border: 1px solid #999;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #d93025;
+      text-align: center;
+    }
+
+    .section {
+      margin-top: 20px;
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
+
+    a {
+      color: #1122cc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <a href="index.html" style="font-weight: bolder;">Home</a>
+  &nbsp;|&nbsp;
+  <a href="https://www.youtube.com" target="_blank">YouTube</a>
+  <a href="https://news.google.com" target="_blank">News</a>
+  <a href="https://mail.google.com" target="_blank">Mail</a>
+  <a href="https://calendar.google.com" target="_blank">Calendar</a>
+
+  <span class="topbar-right" style="color:#0000EE">
+  Hello, Comrade <span id="usernameDisplay">Guest</span>!
+  &nbsp;|&nbsp;
+  <a href="about.html">About Red Star Search!</a>
+</span>
+</div>
+
+<div class="container">
+
+  <h1>🌟 About Red Star Search</h1>
+
+  <div class="section">
+    <p>
+      Red Star Search is a retro-inspired search engine frontend built for the People.
+      It is designed to be simple, lightweight, and accessible on all devices — from modern machines
+      to legendary low-power systems.
+    </p>
+  </div>
+
+  <div class="section">
+    <h3>🚩 Mission</h3>
+    <p>
+      In a world where modern websites become heavier and more complex,
+      Red Star Search returns to a simpler era of the internet.
+    </p>
+    <p>
+      Fast loading. Clean interface. No unnecessary complexity.
+    </p>
+  </div>
+
+  <div class="section">
+    <h3>⚙️ Technology</h3>
+    <p>
+      This project uses Google Programmable Search Engine for results,
+      combined with custom styling and scripts to provide a classic experience.
+    </p>
+    <p>
+      Designed to work on:
+      <br>• Old browsers (even legacy systems)
+      <br>• Slow internet connections
+      <br>• Mobile and WAP devices
+    </p>
+  </div>
+
+  <div class="section">
+    <h3>📟 Features</h3>
+    <p>
+      • Retro UI inspired by early search engines  
+      <br>• Mobile (WAP) version for low bandwidth  
+      <br>• Custom “glorious results” display  
+      <br>• Editable Comrade username system  
+      <br>• Lightweight and fast  
+    </p>
+  </div>
+
+  <div class="section">
+    <h3>⚠️ Notes</h3>
+    <p>
+      Some modern features from Google may not function on very old browsers.
+      However, the core search functionality remains fully operational.
+    </p>
+  </div>
+
+  <div class="section">
+    <h3>👤 Creator</h3>
+    <p>
+      Created by Comrade Khang using simple tools, creativity, and determination.
+    </p>
+    <p>
+      Even the logo was handcrafted in MS Paint.
+    </p>
+  </div>
+
+  <div class="footer">
+    © <span id="year"></span> Comrade Khang 🚩
+  </div>
+
+</div>
+
+<script>
+  // auto year
+  document.getElementById("year").innerHTML = new Date().getFullYear();
+
+  // username system (same as your working one)
+  (function () {
+    function setupUsername() {
+      var span = document.getElementById("usernameDisplay");
+      if (!span) return;
+
+      var saved = localStorage.getItem("rss_username");
+      if (saved) span.innerHTML = saved;
+
+      span.style.cursor = "pointer";
+      span.style.textDecoration = "underline";
+
+      span.onclick = function () {
+        var input = document.createElement("input");
+        input.value = span.innerHTML;
+
+        span.parentNode.replaceChild(input, span);
+        input.focus();
+
+        function save() {
+          var name = input.value.replace(/^\s+|\s+$/g, "") || "Guest";
+          localStorage.setItem("rss_username", name);
+
+          var newSpan = document.createElement("span");
+          newSpan.id = "usernameDisplay";
+          newSpan.innerHTML = name;
+
+          input.parentNode.replaceChild(newSpan, input);
+          setupUsername();
+        }
+
+        input.onblur = save;
+        input.onkeydown = function (e) {
+          if (e.keyCode === 13) save();
+        };
+      };
+    }
+
+    window.onload = setupUsername;
+  })();
+</script>
+
+</body>
+</html>

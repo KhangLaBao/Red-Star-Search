@@ -522,3 +522,12 @@ body, input, button, div {
     padding-bottom: 20px;
     letter-spacing: 0.5px;
 }
+
+.topbar-right a {
+  color: #0000EE;
+  text-decoration: none;
+}
+
+.topbar-right a:hover {
+  text-decoration: underline;
+}
