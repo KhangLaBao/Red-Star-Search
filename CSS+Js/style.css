@@ -500,3 +500,12 @@ body, input, button, div {
   background: #ffd700;
   border-radius: 3px;
 }
+.footer-copyright {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-top: 30px;
+    padding-bottom: 20px;
+    letter-spacing: 0.5px;
+}
