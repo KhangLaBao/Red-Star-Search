@@ -146,6 +146,19 @@ body {
     cursor: pointer;
 }
 
+/* Username display - make it clearly clickable */
+#usernameDisplay {
+    cursor: pointer;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+#usernameDisplay:hover {
+    background-color: #ffff99;
+    padding: 1px 3px;
+    border-radius: 2px;
+}
+
 
 
 .long-search-input {

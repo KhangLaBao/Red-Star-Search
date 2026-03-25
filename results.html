@@ -13,8 +13,9 @@
   <a href="https://news.google.com" target="_blank">News</a>
   <a href="https://mail.google.com" target="_blank">Mail</a>
   <a href="https://calendar.google.com" target="_blank">Calendar</a>
-  <span class="topbar-right">
-    Hello, Comrade <span id="usernameDisplay">Guest</span>
+
+  <span class="topbar-right" style="color:#0000EE">
+    Hello, Comrade <span id="usernameDisplay">Guest</span>!
   </span>
 </div>
 <center>
@@ -228,15 +229,24 @@ setInterval(polishRedStarSafe, 500);
   const span = document.getElementById("usernameDisplay");
   if (!span) return;
 
+  // Set initial cursor style
+  span.style.cursor = "pointer";
+  span.style.textDecoration = "underline";
+  span.style.fontWeight = "bold";
+
   function enableEdit(el) {
-    el.onclick = function () {
+    el.addEventListener("click", function clickHandler(event) {
+      event.stopPropagation();
+      
       const input = document.createElement("input");
       input.value = el.innerText;
       input.style.fontSize = "13px";
       input.style.border = "1px solid #666";
+      input.style.padding = "2px 4px";
 
       el.replaceWith(input);
       input.focus();
+      input.select();
 
       function save() {
         const name = input.value.trim() || "Guest";
@@ -247,6 +257,8 @@ setInterval(polishRedStarSafe, 500);
         newSpan.id = "usernameDisplay";
         newSpan.innerText = name;
         newSpan.style.cursor = "pointer";
+        newSpan.style.textDecoration = "underline";
+        newSpan.style.fontWeight = "bold";
 
         input.replaceWith(newSpan);
         enableEdit(newSpan);
@@ -255,8 +267,12 @@ setInterval(polishRedStarSafe, 500);
       input.onblur = save;
       input.onkeydown = e => {
         if (e.key === "Enter") save();
+        if (e.key === "Escape") {
+          input.replaceWith(el);
+          enableEdit(el);
+        }
       };
-    };
+    });
   }
 
   // load saved name

@@ -106,15 +106,6 @@
     </td>
   </tr>
 </table>
-<div class="footer-copyright">
-    &copy; <span id="autoyear"></span> Comrade Khang
-</div>
-
-<script>
-    // Tự động lấy năm hiện tại từ hệ thống
-    document.getElementById("autoyear").textContent = new Date().getFullYear();
-</script>
-
     </center>
   </body>
 </html>
@@ -221,7 +212,7 @@
 setInterval(polishRedStarPretty, 500);
 
 // run loop
-setInterval(polishRedStarSafe, 500);
+
 
 
   // =========================
@@ -249,67 +240,61 @@ setInterval(polishRedStarSafe, 500);
   // =========================
   // 👤 USERNAME SYSTEM (FIXED)
   // =========================
-  const span = document.getElementById("usernameDisplay");
-  if (!span) return;
+(function () {
 
-  function enableEdit(el) {
-    el.onclick = function () {
+  function setupUsername() {
+    let span = document.getElementById("usernameDisplay");
+    if (!span) return;
+
+    // load saved name
+    const saved = localStorage.getItem("rss_username");
+    if (saved) span.innerText = saved;
+
+    span.style.cursor = "pointer";
+    span.style.textDecoration = "underline";
+    span.style.fontWeight = "bold";
+
+    span.onclick = function () {
       const input = document.createElement("input");
-      input.value = el.innerText;
+      input.type = "text";
+      input.value = span.innerText;
       input.style.fontSize = "13px";
       input.style.border = "1px solid #666";
+      input.style.padding = "2px 4px";
 
-      el.replaceWith(input);
+      span.replaceWith(input);
       input.focus();
 
       function save() {
         const name = input.value.trim() || "Guest";
 
+        // SAVE ✅
         localStorage.setItem("rss_username", name);
 
         const newSpan = document.createElement("span");
         newSpan.id = "usernameDisplay";
         newSpan.innerText = name;
         newSpan.style.cursor = "pointer";
+        newSpan.style.textDecoration = "underline";
+        newSpan.style.fontWeight = "bold";
 
         input.replaceWith(newSpan);
-        enableEdit(newSpan);
+
+        // 🔁 reattach click again
+        setupUsername();
       }
 
       input.onblur = save;
-      input.onkeydown = e => {
+      input.onkeydown = function (e) {
         if (e.key === "Enter") save();
       };
     };
   }
 
-  // load saved name
-  const saved = localStorage.getItem("rss_username");
-  if (saved) span.innerText = saved;
+  // run after page fully loads
+  window.addEventListener("load", setupUsername);
 
-  enableEdit(span);
-
-  function fixStats() {
-  const el = document.querySelector('.gsc-result-info');
-  if (!el) return;
-
-  const text = el.innerText;
-  const nums = text.match(/[\d,.]+/g);
-
-  if (nums && nums.length >= 2) {
-    const count = nums[0];
-    const time = nums[nums.length - 1];
-
-    el.innerHTML = `🌟 <b>Report:</b> ${count} glorious results found for the People in ${time} seconds!`;
-
-    el.style.color = "#d93025";
-    el.style.fontWeight = "bold";
-    el.style.fontFamily = "Arial";
-  }
-}
-
-// 🔥 run VERY often to fight Google reload
-setInterval(fixStats, 300);
+})();
 })();
 
 
