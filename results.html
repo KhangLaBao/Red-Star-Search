@@ -74,233 +74,145 @@
 </html>
 
 <script>
-   // =========================
-  // 🟢 WELCOME MESSAGE
-  // =========================
-  function showWelcome() {
-    const q = new URLSearchParams(window.location.search).get('q');
-    const box = document.querySelector('.results-border-box');
-
-    if (!q && box) {
-      box.innerHTML = `
-        <div class="welcome-container">
-          <h1>Welcome, Comrade! 🌟</h1>
-          <p>The Red Star is ready to guide your search.</p>
-          <p class="hint">Type something above to begin 🚩</p>
-          <div class="star-icon">★</div>
-        </div>
-      `;
-    }
-  }
-
-  window.onload = showWelcome;
-
 (function () {
 
   // =========================
-  // 🟥 TITLE SYSTEM
+  // 👤 USERNAME SYSTEM (LEGACY SAFE)
   // =========================
-  const query = new URLSearchParams(window.location.search).get('q');
-  document.title = query 
-    ? query + " — Glorious Red Star! 🌟"
-    : "Welcome, Comrade! — Red Star Search 🚩";
+  function setupUsername() {
+    var span = document.getElementById("usernameDisplay");
+    if (!span) return;
 
+    var saved = localStorage.getItem("rss_username");
+    if (saved) span.innerHTML = saved;
 
-  // =========================
-  // 🟡 CLEAN STATS FIX (STABLE)
-  // =========================
-  function fixStats() {
-    const el = document.querySelector('.gsc-result-info');
+    span.style.cursor = "pointer";
+    span.style.textDecoration = "underline";
+    span.style.fontWeight = "bold";
 
-    if (!el || el.dataset.done) return;
+    span.onclick = function () {
 
-    const text = el.innerText;
-    const nums = text.match(/[\d,.]+/g);
-
-    if (nums && nums.length >= 2) {
-      const count = nums[0];
-      const time = nums[nums.length - 1];
-
-      el.innerHTML = `🌟 <b>Report:</b> ${count} glorious results found for the People in ${time} seconds!`;
-
-      el.style.color = "#d93025";
-      el.style.fontWeight = "bold";
-      el.style.fontFamily = "Arial";
-
-      el.dataset.done = "1";
-    }
-  }
-
-  setInterval(fixStats, 500);
-
-
-  // =========================
-  // 🔴 R e e e e d Star FIX
-  // =========================
-function polishRedStarPretty() {
-  const cursorBoxes = document.querySelectorAll('.gsc-cursor-box');
-
-  cursorBoxes.forEach(cursorBox => {
-    if (!cursorBox.getAttribute('data-red-star')) {
-      const pages = cursorBox.querySelectorAll('.gsc-cursor-page');
-
-      if (pages.length > 0) {
-
-        // Style the container
-        cursorBox.style.fontSize = "20px";
-        cursorBox.style.fontWeight = "bold";
-        cursorBox.style.textAlign = "center";
-        cursorBox.style.marginTop = "20px";
-
-        // Add R-
-        const rStart = document.createElement('span');
-        rStart.innerText = "R ";
-        rStart.style.color = "#d93025";
-        cursorBox.insertBefore(rStart, cursorBox.firstChild);
-
-        // Style each "e"
-        pages.forEach(page => {
-          if (page.firstChild) {
-            page.firstChild.nodeValue = "e";
-          } else {
-            page.textContent = "e";
-          }
-
-          // 👇 make them BIG and clickable
-          page.style.fontSize = "20px";
-          page.style.margin = "0 4px";
-          page.style.textDecoration = "none";
-          page.style.fontWeight = "bold";
-          page.style.color = "#1122cc"; // classic blue
-        });
-
-        // Current page highlight ⭐
-        const current = cursorBox.querySelector('.gsc-cursor-current-page');
-        if (current) {
-          current.style.color = "#ff0000";
-          current.style.fontSize = "24px";
-        }
-
-        // Add ending
-        const end = document.createElement('span');
-        end.innerText = " d Star! 🌟";
-        end.style.color = "#d93025";
-        cursorBox.appendChild(end);
-
-        cursorBox.setAttribute('data-red-star', 'true');
-      }
-    }
-  });
-}
-
-setInterval(polishRedStarPretty, 500);
-
-// run loop
-setInterval(polishRedStarSafe, 500);
-
-  setInterval(fixPagination, 500);
-
-
-  // =========================
-  // 🟢 WELCOME MESSAGE
-  // =========================
-  function showWelcome() {
-    const q = new URLSearchParams(window.location.search).get('q');
-    const box = document.querySelector('.results-border-box');
-
-    if (!q && box) {
-      box.innerHTML = `
-        <div class="welcome-container">
-          <h1>Welcome, Comrade! 🌟</h1>
-          <p>The Red Star is ready to guide your search.</p>
-          <p class="hint">Type something above to begin 🚩</p>
-          <div class="star-icon">★</div>
-        </div>
-      `;
-    }
-  }
-
-  window.onload = showWelcome;
-
-
-  // =========================
-  // 👤 USERNAME SYSTEM (FIXED)
-  // =========================
-  const span = document.getElementById("usernameDisplay");
-  if (!span) return;
-
-  // Set initial cursor style
-  span.style.cursor = "pointer";
-  span.style.textDecoration = "underline";
-  span.style.fontWeight = "bold";
-
-  function enableEdit(el) {
-    el.addEventListener("click", function clickHandler(event) {
-      event.stopPropagation();
-      
-      const input = document.createElement("input");
-      input.value = el.innerText;
+      var input = document.createElement("input");
+      input.type = "text";
+      input.value = span.innerHTML;
       input.style.fontSize = "13px";
       input.style.border = "1px solid #666";
-      input.style.padding = "2px 4px";
 
-      el.replaceWith(input);
+      span.parentNode.replaceChild(input, span);
       input.focus();
-      input.select();
 
       function save() {
-        const name = input.value.trim() || "Guest";
+        var name = input.value.replace(/^\s+|\s+$/g, "") || "Guest";
 
         localStorage.setItem("rss_username", name);
 
-        const newSpan = document.createElement("span");
+        var newSpan = document.createElement("span");
         newSpan.id = "usernameDisplay";
-        newSpan.innerText = name;
+        newSpan.innerHTML = name;
         newSpan.style.cursor = "pointer";
         newSpan.style.textDecoration = "underline";
         newSpan.style.fontWeight = "bold";
 
-        input.replaceWith(newSpan);
-        enableEdit(newSpan);
+        input.parentNode.replaceChild(newSpan, input);
+
+        setupUsername(); // reattach
       }
 
       input.onblur = save;
-      input.onkeydown = e => {
-        if (e.key === "Enter") save();
-        if (e.key === "Escape") {
-          input.replaceWith(el);
-          enableEdit(el);
-        }
+      input.onkeydown = function (e) {
+        if (e.keyCode === 13) save();
       };
-    });
+    };
   }
 
-  // load saved name
-  const saved = localStorage.getItem("rss_username");
-  if (saved) span.innerText = saved;
+  // =========================
+  // 🟢 WELCOME
+  // =========================
+  function showWelcome() {
+    var q = new URLSearchParams(window.location.search).get('q');
+    var box = document.querySelector('.results-border-box');
 
-  enableEdit(span);
- 
+    if (!q && box) {
+      box.innerHTML =
+        '<div class="welcome-container">' +
+        '<h1>Welcome, Comrade! 🌟</h1>' +
+        '<p>The Red Star is ready to guide your search.</p>' +
+        '<p class="hint">Type something above to begin 🚩</p>' +
+        '<div class="star-icon">★</div>' +
+        '</div>';
+    }
+  }
+
+  // =========================
+  // 🟡 STATS FIX
+  // =========================
   function fixStats() {
-  const el = document.querySelector('.gsc-result-info');
-  if (!el) return;
+    var el = document.querySelector('.gsc-result-info');
+    if (!el) return;
 
-  const text = el.innerText;
-  const nums = text.match(/[\d,.]+/g);
+    var text = el.innerText;
+    var nums = text.match(/[\d,.]+/g);
 
-  if (nums && nums.length >= 2) {
-    const count = nums[0];
-    const time = nums[nums.length - 1];
+    if (nums && nums.length >= 2) {
+      el.innerHTML =
+        '🌟 <b>Report:</b> ' + nums[0] +
+        ' glorious results found for the People in ' +
+        nums[nums.length - 1] + ' seconds!';
 
-    el.innerHTML = `🌟 <b>Report:</b> ${count} glorious results found for the People in ${time} seconds!`;
-
-    el.style.color = "#d93025";
-    el.style.fontWeight = "bold";
-    el.style.fontFamily = "Arial";
+      el.style.color = "#d93025";
+      el.style.fontWeight = "bold";
+      el.style.fontFamily = "Arial";
+    }
   }
-}
 
-// 🔥 run VERY often to fight Google reload
-setInterval(fixStats, 300);
+  // =========================
+  // 🔴 PAGINATION STYLE
+  // =========================
+  function polishRedStar() {
+    var boxes = document.querySelectorAll('.gsc-cursor-box');
+
+    for (var i = 0; i < boxes.length; i++) {
+      var box = boxes[i];
+
+      if (!box.getAttribute('data-red')) {
+        var pages = box.querySelectorAll('.gsc-cursor-page');
+
+        if (pages.length > 0) {
+          box.style.fontSize = "20px";
+          box.style.fontWeight = "bold";
+          box.style.textAlign = "center";
+
+          var start = document.createElement('span');
+          start.innerHTML = "R ";
+          start.style.color = "#d93025";
+          box.insertBefore(start, box.firstChild);
+
+          for (var j = 0; j < pages.length; j++) {
+            pages[j].innerHTML = "e";
+            pages[j].style.margin = "0 4px";
+          }
+
+          var end = document.createElement('span');
+          end.innerHTML = " d Star! 🌟";
+          end.style.color = "#d93025";
+          box.appendChild(end);
+
+          box.setAttribute('data-red', "1");
+        }
+      }
+    }
+  }
+
+  // =========================
+  // 🚀 INIT (ONE ONLY!)
+  // =========================
+  window.onload = function () {
+    setupUsername();
+    showWelcome();
+
+    setInterval(fixStats, 400);
+    setInterval(polishRedStar, 500);
+  };
+
 })();
 </script>
