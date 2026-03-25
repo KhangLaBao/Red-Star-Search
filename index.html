@@ -243,58 +243,60 @@ setInterval(polishRedStarPretty, 500);
 (function () {
 
   function setupUsername() {
-    let span = document.getElementById("usernameDisplay");
+    var span = document.getElementById("usernameDisplay");
     if (!span) return;
 
     // load saved name
-    const saved = localStorage.getItem("rss_username");
-    if (saved) span.innerText = saved;
+    var saved = localStorage.getItem("rss_username");
+    if (saved) span.innerHTML = saved;
 
     span.style.cursor = "pointer";
     span.style.textDecoration = "underline";
     span.style.fontWeight = "bold";
 
     span.onclick = function () {
-      const input = document.createElement("input");
+
+      var input = document.createElement("input");
       input.type = "text";
-      input.value = span.innerText;
+      input.value = span.innerHTML;
       input.style.fontSize = "13px";
       input.style.border = "1px solid #666";
-      input.style.padding = "2px 4px";
 
-      span.replaceWith(input);
+      span.parentNode.replaceChild(input, span);
       input.focus();
 
       function save() {
-        const name = input.value.trim() || "Guest";
+        var name = input.value.replace(/^\s+|\s+$/g, "") || "Guest";
 
-        // SAVE ✅
         localStorage.setItem("rss_username", name);
 
-        const newSpan = document.createElement("span");
+        var newSpan = document.createElement("span");
         newSpan.id = "usernameDisplay";
-        newSpan.innerText = name;
+        newSpan.innerHTML = name;
         newSpan.style.cursor = "pointer";
         newSpan.style.textDecoration = "underline";
         newSpan.style.fontWeight = "bold";
 
-        input.replaceWith(newSpan);
+        input.parentNode.replaceChild(newSpan, input);
 
-        // 🔁 reattach click again
+        // reattach
         setupUsername();
       }
 
       input.onblur = save;
       input.onkeydown = function (e) {
-        if (e.key === "Enter") save();
+        if (e.keyCode === 13) save(); // Enter key (old style)
       };
     };
   }
 
-  // run after page fully loads
-  window.addEventListener("load", setupUsername);
+  // OLD SCHOOL LOAD (works in Chrome 52)
+  window.onload = function () {
+    setupUsername();
+  };
 
 })();
+
 })();
 
 
