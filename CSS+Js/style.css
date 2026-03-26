@@ -531,3 +531,77 @@ body, input, button, div {
 .topbar-right a:hover {
   text-decoration: underline;
 }
+
+/* Ép màu xanh cho mọi thành phần văn bản trong kết quả hình ảnh */
+.gsc-imageResult .gs-title,
+.gsc-imageResult .gs-title *,
+.gsc-imageResult .gs-snippet,
+.gsc-imageResult .gs-snippet * {
+    color: 	#77aaff !important;
+    text-decoration: none !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-weight: bold !important;
+}
+
+/* Chỉ hiện gạch chân khi di chuột vào */
+.gsc-imageResult:hover .gs-title,
+.gsc-imageResult:hover .gs-snippet {
+    text-decoration: underline !important;
+}
+
+/* 1. Style Tiêu đề trong khung xem trước (Preview) */
+.gs-previewLink{
+    color: #8ab4f8 !important; /* Xanh Light Blue đậm hơn một chút để nổi bật */
+    font-size: 20px !important;
+    font-weight: bold !important;
+    font-family: Arial, sans-serif !important;
+    margin-bottom: 10px !important;
+}
+
+/* 2. Style Đường dẫn (URL) cho rực rỡ */
+.gs-previewUrl{
+    color: #32cd32 !important; /* Xanh lá rực rỡ */
+    font-size: 14px !important;
+    border-bottom: 1px solid #444; /* Thêm đường kẻ dưới để bớt trống */
+    padding-bottom: 8px !important;
+    display: block !important;
+}
+
+/* 3. Style Thông số kỹ thuật (Metadata) */
+.gs-previewSize {
+    color: #ffffff !important; /* Trắng tinh khiết */
+    font-size: 13px !important;
+    margin-top: 10px !important;
+}
+
+
+
+.gs-previewLink:hover {
+    text-decoration: underline !important;
+}
+
+/* 2. Đường dẫn URL (Sắc nét) */
+.gs-previewUrl {
+    color: #32cd32 !important; /* Xanh lá Soviet rực rỡ */
+    font-size: 15px !important;
+    font-family: Arial !important;
+    border-bottom: 1px solid #444 !important; /* Đường kẻ phân cách cho bớt trống */
+    padding-bottom: 10px !important;
+    margin-bottom: 10px !important;
+    display: block !important;
+}
+
+/* 3. Thông số kích thước (Màu bạc) */
+.gs-previewSize {
+    color: #cccccc !important; /* Màu xám bạc dễ đọc */
+    font-size: 13px !important;
+    font-weight: normal !important;
+}
+
+/* 4. Mẹo: Thêm "Viền đỏ thiết quân luật" cho khung Preview */
+.gs-previewSnippet {
+    border: 2px solid #444 !important; /* Viền ngoài cứng cáp */
+    border-left: 5px solid #d93025 !important; /* Điểm nhấn đỏ Soviet bên trái */
+    background-color: #1a1a1a !important; /* Nền tối sâu để làm nổi bật ảnh */
+    padding: 20px !important;
+}

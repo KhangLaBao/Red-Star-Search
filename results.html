@@ -146,7 +146,7 @@
         '</div>';
     }
   }
-
+  
   // =========================
   // 🟡 STATS FIX
   // =========================
@@ -167,6 +167,10 @@
       el.style.fontWeight = "bold";
       el.style.fontFamily = "Arial";
     }
+    // Thêm đoạn này vào trong setInterval hiện tại của đồng chí
+    document.querySelectorAll('.gsc-imageResult .gs-snippet, .gsc-imageResult .gs-title').forEach(el => {
+      el.style.setProperty('color', '#77aaff', 'important',fontWeight = 'bold', fontFamily = 'Arial', 'important');
+    });
   }
 
   // =========================
