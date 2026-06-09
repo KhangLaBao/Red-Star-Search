@@ -21,9 +21,13 @@ function searchDDG(query, callback) {
 
         res.on("data", chunk => data += chunk);
 
-        res.on("end", () => {
-            callback(null, data);
-        });
+res.on("end", () => {
+    console.log("RAW HTML START >>>");
+    console.log(data.slice(0, 1000));
+    console.log("RAW HTML END <<<");
+
+    callback(null, data);
+});
 
     }).on("error", (err) => {
         callback(err, null);
@@ -96,7 +100,7 @@ function renderPage(query, results) {
         </style>
     </head>
     <body>
-        <h1>🌟 Red Star Search</h1>
+        <h1>🌟 Red Star Search (Ver 12.8)</h1>
 
         <form action="/search">
             <input name="q" value="${query}" style="width:300px;">
