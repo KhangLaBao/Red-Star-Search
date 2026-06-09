@@ -219,7 +219,7 @@ function render(query, results, source) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search</h1>
+    <h1>🌟 Red Star Search (Ver 12.13)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -246,8 +246,8 @@ function render(query, results, source) {
                 out += `
                 <div class="box">
                     <div><small>Type: Image</small></div>
-                    <a href="${safeLink || '#'}" target="_blank"><img src="${r.thumbnail}" style="max-width:240px; max-height:160px; display:block;" alt="${r.title}"></a>
-                    <a href="${safeLink || '#'}" target="_blank">${r.title}</a>
+                    <img src="${r.thumbnail}" data-img="${encodeURIComponent(r.thumbnail)}" data-title="${encodeURIComponent(r.title)}" onclick="showImage(this.dataset.img,this.dataset.title)" style="max-width:240px; max-height:160px; display:block; cursor:pointer;" alt="${r.title}">
+                    <div><a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a></div>
                     <br><small>${safeLink || domain}</small>
                 </div>
             `;
@@ -256,6 +256,7 @@ function render(query, results, source) {
                 <div class="box">
                     <div><small>Type: ${r.type}</small></div>
                     <a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a>
+                    ${r.type === 'news' ? `<button onclick="showNews('${encodeURIComponent(r.title)}','${encodeURIComponent(r.snippet)}','${encodeURIComponent(safeLink)}')" style="margin-left:8px">View</button>` : ''}
                     <br><small>${safeLink || domain}</small>
                     ${r.snippet ? `<p>${r.snippet}</p>` : ''}
                 </div>
@@ -264,7 +265,38 @@ function render(query, results, source) {
         });
     }
 
-    out += "</body></html>";
+        // modal + scripts for image/news preview
+        out += `
+        <div id="rs-modal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;align-items:center;justify-content:center;z-index:9999;background:rgba(0,0,0,0.7)">
+            <div style="background:#fff;padding:12px;max-width:90%;max-height:90%;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,0.5);position:relative;">
+                <button onclick="closeModal()" style="position:absolute;right:8px;top:8px;">Close</button>
+                <div id="rs-modal-content"></div>
+            </div>
+        </div>
+        <script>
+        function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+        function showImage(imgEnc,titleEnc){
+            try{
+                const src = decodeURIComponent(imgEnc||'');
+                const title = decodeURIComponent(titleEnc||'');
+                const container = document.getElementById('rs-modal-content');
+                container.innerHTML = '<h3>'+escapeHtml(title)+'</h3><img src="'+escapeHtml(src)+'" style="max-width:100%;height:auto">';
+                document.getElementById('rs-modal').style.display = 'flex';
+            }catch(e){ console.error(e); }
+        }
+        function showNews(titleEnc,snippetEnc,linkEnc){
+            try{
+                const title = decodeURIComponent(titleEnc||'');
+                const snippet = decodeURIComponent(snippetEnc||'');
+                const link = decodeURIComponent(linkEnc||'');
+                const container = document.getElementById('rs-modal-content');
+                container.innerHTML = '<h3>'+escapeHtml(title)+'</h3>' + (snippet?'<p>'+escapeHtml(snippet)+'</p>':'') + (link?'<p><a href="'+escapeHtml(link)+'" target="_blank">Open article</a></p>':'');
+                document.getElementById('rs-modal').style.display = 'flex';
+            }catch(e){ console.error(e); }
+        }
+        function closeModal(){ document.getElementById('rs-modal').style.display = 'none'; document.getElementById('rs-modal-content').innerHTML=''; }
+        </script>
+        </body></html>`;
     return out;
 }
 
@@ -280,7 +312,7 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.11)</h1>
+            <h1>🌟 Red Star Search (12.13)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
