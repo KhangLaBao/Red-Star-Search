@@ -252,7 +252,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.17)</h1>
+    <h1>🌟 Red Star Search (Ver 12.18)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -269,103 +269,16 @@ function render(query, results, source, currentType) {
     const imageResults = (results || []).filter(r => r.type === 'image');
     const newsResults = (results || []).filter(r => r.type === 'news');
 
-    // helper to normalize/thumb URL
-    function normThumb(t){
-        if(!t) return '';
-        try{ t = String(t).trim(); }catch(e){ return ''; }
-        if(!t) return '';
-        if(t.startsWith('//')) return 'https:' + t;
-        if(/^https?:\/\//i.test(t)) return t;
-        // if looks like domain or path without protocol, try https prefix
-        if(/^[^\s\\/]+\.[^\s\\/]+/.test(t)) return 'https://' + t;
-        return '';
-    }
-
     out += `
         <div style="margin-top:12px;">
-            <div class="rs-tabs" style="margin-bottom:10px;">
-                <a id="tab-web" href="/search?q=${encodeURIComponent(query)}&type=web"><button style="margin-right:6px;${ct==='web'?'background:#ddd;':''}">WEB</button></a>
-                <a id="tab-images" href="/search?q=${encodeURIComponent(query)}&type=images"><button style="margin-right:6px;${ct==='images'?'background:#ddd;':''}">IMAGES</button></a>
-                <a id="tab-news" href="/search?q=${encodeURIComponent(query)}&type=news"><button style="${ct==='news'?'background:#ddd;':''}">NEWS</button></a>
-            </div>
-
-      <div id="rs-web" class="rs-tabcontent">
-        ${webResults.length ? webResults.map(r => {
-            const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
-            const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
-            return `<div class="box"><div><small>Type: web</small></div><a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a><br><small>${safeLink || domain}</small>${r.snippet?`<p>${r.snippet}</p>`:''}</div>`;
-        }).slice(0,50).join('') : '<p><b>No web results.</b></p>'}
-      </div>
-
-            <div id="rs-images" class="rs-tabcontent" style="display:none;">
-                ${imageResults.length ? imageResults.map(r => {
-                        const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
-                        const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
-                        const thumbRaw = r.thumbnail || '';
-                        const thumb = normThumb(thumbRaw);
-                        const imgTag = thumb ? `<img src="${thumb}" data-img="${encodeURIComponent(thumb)}" data-title="${encodeURIComponent(r.title)}" onclick="showImage(this.dataset.img,this.dataset.title)" style="max-width:240px; max-height:160px; display:block; cursor:pointer;" alt="${r.title}" onerror="this.style.display='none'">` : '';
-                        return `<div class="box"><div><small>Type: image</small></div>${imgTag}<div><a ${safeLink?`href="${safeLink}" target="_blank"`:''}>${r.title}</a></div><br><small>${safeLink || domain}</small></div>`;
-                }).slice(0,50).join('') : '<p><b>No image results.</b></p>'}
-            </div>
-
-      <div id="rs-news" class="rs-tabcontent" style="display:none;">
-        ${newsResults.length ? newsResults.map(r => {
-            const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
-            return `<div class="box"><div><small>Type: news</small></div><a ${safeLink?`href="${safeLink}" target="_blank"`:''}>${r.title}</a> ${r.snippet?`<button onclick="showNews('${encodeURIComponent(r.title)}','${encodeURIComponent(r.snippet)}','${encodeURIComponent(safeLink)}')" style="margin-left:8px">View</button>`:''}<br><small>${safeLink || ''}</small>${r.snippet?`<p>${r.snippet}</p>`:''}</div>`;
-        }).slice(0,50).join('') : '<p><b>No news results.</b></p>'}
-      </div>
-    </div>
-    `;
-
-        // modal + scripts for image/news preview
-        out += `
-        <div id="rs-modal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;align-items:center;justify-content:center;z-index:9999;background:rgba(0,0,0,0.7)">
-            <div style="background:#fff;padding:12px;max-width:90%;max-height:90%;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,0.5);position:relative;">
-                <button onclick="closeModal()" style="position:absolute;right:8px;top:8px;">Close</button>
-                <div id="rs-modal-content"></div>
-            </div>
+            <h3>Web Results</h3>
+            ${webResults.length ? webResults.slice(0,10).map(r => {
+                const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
+                const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
+                return `<div class="box"><div><small>Type: web</small></div><a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a><br><small>${safeLink || domain}</small>${r.snippet?`<p>${r.snippet}</p>`:''}</div>`;
+            }).join('') : '<p><b>No web results.</b></p>'}
         </div>
-        <script>
-        function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-        function showImage(imgEnc,titleEnc){
-            try{
-                const src = decodeURIComponent(imgEnc||'');
-                const title = decodeURIComponent(titleEnc||'');
-                const container = document.getElementById('rs-modal-content');
-                container.innerHTML = '<h3>'+escapeHtml(title)+'</h3><img src="'+escapeHtml(src)+'" style="max-width:100%;height:auto">';
-                document.getElementById('rs-modal').style.display = 'flex';
-            }catch(e){ console.error(e); }
-        }
-        function showNews(titleEnc,snippetEnc,linkEnc){
-            try{
-                const title = decodeURIComponent(titleEnc||'');
-                const snippet = decodeURIComponent(snippetEnc||'');
-                const link = decodeURIComponent(linkEnc||'');
-                const container = document.getElementById('rs-modal-content');
-                container.innerHTML = '<h3>'+escapeHtml(title)+'</h3>' + (snippet?'<p>'+escapeHtml(snippet)+'</p>':'') + (link?'<p><a href="'+escapeHtml(link)+'" target="_blank">Open article</a></p>':'');
-                document.getElementById('rs-modal').style.display = 'flex';
-            }catch(e){ console.error(e); }
-        }
-        function switchTab(tab){
-            const web = document.getElementById('rs-web');
-            const images = document.getElementById('rs-images');
-            const news = document.getElementById('rs-news');
-            const btnWeb = document.getElementById('tab-web');
-            const btnImages = document.getElementById('tab-images');
-            const btnNews = document.getElementById('tab-news');
-            web.style.display = (tab==='web') ? 'block' : 'none';
-            images.style.display = (tab==='images') ? 'block' : 'none';
-            news.style.display = (tab==='news') ? 'block' : 'none';
-            // simple active styles
-            [btnWeb,btnImages,btnNews].forEach(b=>{ if(b) b.style.background=''; b&&b.classList&&b.classList.remove('active'); });
-            const activeBtn = tab==='web'?btnWeb:(tab==='images'?btnImages:btnNews);
-            if(activeBtn){ activeBtn.style.background='#ddd'; activeBtn.classList.add('active'); }
-        }
-        function closeModal(){ document.getElementById('rs-modal').style.display = 'none'; document.getElementById('rs-modal-content').innerHTML=''; }
-        // initialize tabs using server-side current type
-        document.addEventListener('DOMContentLoaded', function(){ try{ switchTab('${ct}'); }catch(e){} });
-        </script>
-        </body></html>`;
+    </body></html>`;
     return out;
 }
 
@@ -398,7 +311,7 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.17)</h1>
+            <h1>🌟 Red Star Search (12.18)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
