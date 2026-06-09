@@ -30,14 +30,13 @@ function searchDDG(query, callback) {
 function parseResults(html) {
     const results = [];
 
-    // match result blocks (DuckDuckGo HTML structure)
-    const regex = /<a rel="nofollow" class="result__a" href="(.*?)".*?>(.*?)<\/a>/g;
+    const regex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g;
 
     let match;
 
     while ((match = regex.exec(html)) !== null) {
-        const link = match[1];
-        const title = match[2].replace(/<[^>]*>/g, "");
+        let link = cleanLink(match[1]);
+        let title = match[2].replace(/<.*?>/g, "").trim();
 
         results.push({ title, link });
     }
@@ -45,6 +44,16 @@ function parseResults(html) {
     return results;
 }
 
+function cleanLink(url) {
+    try {
+        if (url.includes("uddg=")) {
+            return decodeURIComponent(url.split("uddg=")[1]);
+        }
+        return url;
+    } catch {
+        return url;
+    }
+}
 // -----------------------------
 // HTML PAGE RENDER
 // -----------------------------
