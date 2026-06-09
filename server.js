@@ -252,7 +252,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.16)</h1>
+    <h1>🌟 Red Star Search (Ver 12.17)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -268,6 +268,18 @@ function render(query, results, source, currentType) {
     const webResults = (results || []).filter(r => r.type === 'web');
     const imageResults = (results || []).filter(r => r.type === 'image');
     const newsResults = (results || []).filter(r => r.type === 'news');
+
+    // helper to normalize/thumb URL
+    function normThumb(t){
+        if(!t) return '';
+        try{ t = String(t).trim(); }catch(e){ return ''; }
+        if(!t) return '';
+        if(t.startsWith('//')) return 'https:' + t;
+        if(/^https?:\/\//i.test(t)) return t;
+        // if looks like domain or path without protocol, try https prefix
+        if(/^[^\s\\/]+\.[^\s\\/]+/.test(t)) return 'https://' + t;
+        return '';
+    }
 
     out += `
         <div style="margin-top:12px;">
@@ -285,14 +297,16 @@ function render(query, results, source, currentType) {
         }).slice(0,50).join('') : '<p><b>No web results.</b></p>'}
       </div>
 
-      <div id="rs-images" class="rs-tabcontent" style="display:none;">
-        ${imageResults.length ? imageResults.map(r => {
-            const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
-            const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
-            const thumb = r.thumbnail || '';
-            return `<div class="box"><div><small>Type: image</small></div><img src="${thumb}" data-img="${encodeURIComponent(thumb)}" data-title="${encodeURIComponent(r.title)}" onclick="showImage(this.dataset.img,this.dataset.title)" style="max-width:240px; max-height:160px; display:block; cursor:pointer;" alt="${r.title}"><div><a ${safeLink?`href="${safeLink}" target="_blank"`:''}>${r.title}</a></div><br><small>${safeLink || domain}</small></div>`;
-        }).slice(0,50).join('') : '<p><b>No image results.</b></p>'}
-      </div>
+            <div id="rs-images" class="rs-tabcontent" style="display:none;">
+                ${imageResults.length ? imageResults.map(r => {
+                        const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
+                        const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
+                        const thumbRaw = r.thumbnail || '';
+                        const thumb = normThumb(thumbRaw);
+                        const imgTag = thumb ? `<img src="${thumb}" data-img="${encodeURIComponent(thumb)}" data-title="${encodeURIComponent(r.title)}" onclick="showImage(this.dataset.img,this.dataset.title)" style="max-width:240px; max-height:160px; display:block; cursor:pointer;" alt="${r.title}" onerror="this.style.display='none'">` : '';
+                        return `<div class="box"><div><small>Type: image</small></div>${imgTag}<div><a ${safeLink?`href="${safeLink}" target="_blank"`:''}>${r.title}</a></div><br><small>${safeLink || domain}</small></div>`;
+                }).slice(0,50).join('') : '<p><b>No image results.</b></p>'}
+            </div>
 
       <div id="rs-news" class="rs-tabcontent" style="display:none;">
         ${newsResults.length ? newsResults.map(r => {
@@ -384,7 +398,7 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.16)</h1>
+            <h1>🌟 Red Star Search (12.17)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
