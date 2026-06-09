@@ -6,11 +6,11 @@ const url = require("url");
 // DUCKDUCKGO INSTANT API
 // -------------------------
 function searchDDG(query, callback) {
-    const api = "https://api.duckduckgo.com/?q=" 
-        + encodeURIComponent(query) 
+    const api = "https://api.duckduckgo.com/?q="
+        + encodeURIComponent(query)
         + "&format=json&no_html=1&skip_disambig=1";
 
-    https.get(api, (res) => {
+    const req = https.get(api, (res) => {
         let data = "";
 
         res.on("data", chunk => data += chunk);
@@ -23,12 +23,18 @@ function searchDDG(query, callback) {
                 callback(e, null);
             }
         });
+    });
 
-    }).on("error", (err) => {
+    // 🚩 IMPORTANT: prevent infinite hanging
+    req.setTimeout(6000, () => {
+        req.destroy();
+        callback(new Error("timeout"), null);
+    });
+
+    req.on("error", (err) => {
         callback(err, null);
     });
 }
-
 // -------------------------
 // HTML RENDER
 // -------------------------
