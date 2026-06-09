@@ -10,8 +10,8 @@ try {
 }
 
 // --- API KEYS / CONFIG ---
-const SERP_API_KEY = "f48359b7370f31c965f4ac42605920376c3797ee39fe7131ec139b3af4fa56ea";
-const RAPIDAPI_KEY = "fe7f18dd34msh28d6ac0d74956fbp12b4afjsnb31038159c43";
+const SERP_API_KEY = process.env.SERP_API_KEY || "f48359b7370f31c965f4ac42605920376c3797ee39fe7131ec139b3af4fa56ea";
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || "fe7f18dd34msh28d6ac0d74956fbp12b4afjsnb31038159c43";
 
 // -----------------------------
 // FETCH JSON (SearXNG)
@@ -116,6 +116,34 @@ function searchSerpApi(query, callback) {
 }
 
 // -----------------------------
+// SERPAPI IMAGE SEARCH (tbm=isch)
+// -----------------------------
+function searchSerpApiImages(query, callback) {
+    if (!getJson) return callback(new Error('SerpApi module not available'), null);
+    try {
+        getJson({
+            engine: 'google',
+            q: query,
+            tbm: 'isch',
+            google_domain: 'google.com',
+            hl: 'en',
+            gl: 'us',
+            api_key: SERP_API_KEY
+        }, (json) => {
+            try {
+                const results = normalizeResultsFromJson(json);
+                if (results && results.length) return callback(null, results);
+                return callback(new Error('no images from serpapi'), null);
+            } catch (e) {
+                return callback(e, null);
+            }
+        });
+    } catch (e) {
+        return callback(e, null);
+    }
+}
+
+// -----------------------------
 // RAPIDAPI GENERIC CALL
 // -----------------------------
 function rapidApiGet(host, path, callback) {
@@ -141,6 +169,10 @@ function rapidApiGet(host, path, callback) {
             try {
                 const json = JSON.parse(data);
                 const results = normalizeResultsFromJson(json);
+                if (!results.length) {
+                    try { console.error('RapidAPI returned JSON keys:', Object.keys(json).slice(0,20)); } catch(e){}
+                    console.error('RapidAPI raw length:', data.length);
+                }
                 return callback(null, results.length ? results : []);
             } catch (e) {
                 console.error('RapidAPI parse error for host', host, 'path', path, 'error', e.message);
@@ -205,7 +237,8 @@ function searchWikipedia(query, callback) {
 // -----------------------------
 // RENDER HTML
 // -----------------------------
-function render(query, results, source) {
+function render(query, results, source, currentType) {
+    const ct = currentType || 'web';
     let out = `
     <html>
     <head>
@@ -219,7 +252,7 @@ function render(query, results, source) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.14)</h1>
+    <h1>🌟 Red Star Search (Ver 12.15)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -237,12 +270,12 @@ function render(query, results, source) {
     const newsResults = (results || []).filter(r => r.type === 'news');
 
     out += `
-    <div style="margin-top:12px;">
-      <div class="rs-tabs" style="margin-bottom:10px;">
-        <button id="tab-web" onclick="switchTab('web')" style="margin-right:6px;">WEB</button>
-        <button id="tab-images" onclick="switchTab('images')" style="margin-right:6px;">IMAGES</button>
-        <button id="tab-news" onclick="switchTab('news')">NEWS</button>
-      </div>
+        <div style="margin-top:12px;">
+            <div class="rs-tabs" style="margin-bottom:10px;">
+                <a id="tab-web" href="/search?q=${encodeURIComponent(query)}&type=web"><button style="margin-right:6px;${ct==='web'?'background:#ddd;':''}">WEB</button></a>
+                <a id="tab-images" href="/search?q=${encodeURIComponent(query)}&type=images"><button style="margin-right:6px;${ct==='images'?'background:#ddd;':''}">IMAGES</button></a>
+                <a id="tab-news" href="/search?q=${encodeURIComponent(query)}&type=news"><button style="${ct==='news'?'background:#ddd;':''}">NEWS</button></a>
+            </div>
 
       <div id="rs-web" class="rs-tabcontent">
         ${webResults.length ? webResults.map(r => {
@@ -322,6 +355,23 @@ function render(query, results, source) {
 }
 
 // -----------------------------
+// Safe responder to avoid throwing during render
+// -----------------------------
+function safeRenderEnd(res, query, results, source, reqType) {
+    try {
+        const html = render(query, results, source, reqType);
+        return res.end(html);
+    } catch (e) {
+        console.error('Render error:', e && e.stack ? e.stack : e);
+        try {
+            return res.end(`<html><body><h1>Error</h1><p>Rendering failed.</p></body></html>`);
+        } catch (e2) {
+            console.error('Failed to send error response', e2);
+        }
+    }
+}
+
+// -----------------------------
 // SERVER
 // -----------------------------
 const server = http.createServer((req, res) => {
@@ -333,7 +383,7 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.14)</h1>
+            <h1>🌟 Red Star Search (12.15)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
@@ -345,7 +395,8 @@ const server = http.createServer((req, res) => {
     if (q.pathname === "/search") {
 
         const query = q.query.q || "";
-        console.log('Received search request for:', query);
+        const reqType = (q.query && q.query.type) ? String(q.query.type).toLowerCase() : 'web';
+        console.log('Received search request for:', query, 'type:', reqType);
 
         // -----------------------------
         // Provider chain (in order):
@@ -354,37 +405,91 @@ const server = http.createServer((req, res) => {
         // -----------------------------
 
         // 1) SerpApi
+        // If the request specifically asks for images, try RapidAPI image provider first
+        if (reqType === 'images') {
+            console.log('Request type=images — trying RapidAPI #2 first');
+            return searchRapidAPI2(query, (errImg, imgResults) => {
+                if (!errImg && imgResults && imgResults.length) {
+                    return safeRenderEnd(res, query, imgResults, "RapidAPI #2 (Images)", reqType);
+                }
+                if (errImg) console.error('RapidAPI2 error:', errImg && errImg.message ? errImg.message : errImg);
+
+                console.log('Falling back to SerpApi images after RapidAPI2');
+                return searchSerpApiImages(query, (errImg2, imgResults2) => {
+                    if (!errImg2 && imgResults2 && imgResults2.length) {
+                        return safeRenderEnd(res, query, imgResults2, "SerpApi (images)", reqType);
+                    }
+                    if (errImg2) console.error('SerpApi images error:', errImg2 && errImg2.message ? errImg2.message : errImg2);
+
+                    console.log('Trying SerpApi (regular)');
+                    return searchSerpApi(query, (err, results) => {
+                        if (!err && results && results.length) {
+                            return safeRenderEnd(res, query, results, "SerpApi", reqType);
+                        }
+                        if (err) console.error('SerpApi error:', err && err.message ? err.message : err);
+
+                        // continue with other fallbacks below
+                        console.log('Trying RapidAPI #1');
+                        return searchRapidAPI1(query, (err1, r1) => {
+                            if (!err1 && r1 && r1.length) return safeRenderEnd(res, query, r1, "RapidAPI #1", reqType);
+                            if (err1) console.error('RapidAPI1 error:', err1 && err1.message ? err1.message : err1);
+
+                            console.log('Trying RapidAPI #2 (Images)');
+                            return searchRapidAPI2(query, (err2, r2) => {
+                                if (!err2 && r2 && r2.length) return safeRenderEnd(res, query, r2, "RapidAPI #2 (Images)", reqType);
+                                if (err2) console.error('RapidAPI2 error:', err2 && err2.message ? err2.message : err2);
+
+                                console.log('Trying RapidAPI #3 (Patents)');
+                                return searchRapidAPI3(query, (err3, r3) => {
+                                    if (!err3 && r3 && r3.length) return safeRenderEnd(res, query, r3, "RapidAPI #3 (Patents)", reqType);
+                                    if (err3) console.error('RapidAPI3 error:', err3 && err3.message ? err3.message : err3);
+
+                                    console.log('Trying Wikipedia API');
+                                    return searchWikipedia(query, (errW, wres) => {
+                                        if (!errW && wres && wres.length) return safeRenderEnd(res, query, wres, "Wikipedia API", reqType);
+                                        if (errW) console.error('Wikipedia error:', errW && errW.message ? errW.message : errW);
+
+                                        return safeRenderEnd(res, query, [], "Link fallback", reqType);
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        }
+
         console.log('Trying SerpApi');
         return searchSerpApi(query, (err, results) => {
-            if (!err && results && results.length) return res.end(render(query, results, "SerpApi"));
+            if (!err && results && results.length) return safeRenderEnd(res, query, results, "SerpApi", reqType);
             if (err) console.error('SerpApi error:', err && err.message ? err.message : err);
 
             // 2) RapidAPI #1
             console.log('Trying RapidAPI #1');
             return searchRapidAPI1(query, (err1, r1) => {
-                if (!err1 && r1 && r1.length) return res.end(render(query, r1, "RapidAPI #1"));
+                if (!err1 && r1 && r1.length) return safeRenderEnd(res, query, r1, "RapidAPI #1", reqType);
                 if (err1) console.error('RapidAPI1 error:', err1 && err1.message ? err1.message : err1);
 
                 // 3) RapidAPI #2 (images)
                 console.log('Trying RapidAPI #2 (Images)');
                 return searchRapidAPI2(query, (err2, r2) => {
-                    if (!err2 && r2 && r2.length) return res.end(render(query, r2, "RapidAPI #2 (Images)"));
+                    if (!err2 && r2 && r2.length) return safeRenderEnd(res, query, r2, "RapidAPI #2 (Images)", reqType);
                     if (err2) console.error('RapidAPI2 error:', err2 && err2.message ? err2.message : err2);
 
                     // 4) RapidAPI #3 (patents)
                     console.log('Trying RapidAPI #3 (Patents)');
                     return searchRapidAPI3(query, (err3, r3) => {
-                        if (!err3 && r3 && r3.length) return res.end(render(query, r3, "RapidAPI #3 (Patents)"));
+                        if (!err3 && r3 && r3.length) return safeRenderEnd(res, query, r3, "RapidAPI #3 (Patents)", reqType);
                         if (err3) console.error('RapidAPI3 error:', err3 && err3.message ? err3.message : err3);
 
                         // 5) Wikipedia
                         console.log('Trying Wikipedia API');
                         return searchWikipedia(query, (errW, wres) => {
-                            if (!errW && wres && wres.length) return res.end(render(query, wres, "Wikipedia API"));
+                            if (!errW && wres && wres.length) return safeRenderEnd(res, query, wres, "Wikipedia API", reqType);
                             if (errW) console.error('Wikipedia error:', errW && errW.message ? errW.message : errW);
 
                             // 6) final link fallback
-                            return res.end(render(query, [], "Link fallback"));
+                            return safeRenderEnd(res, query, [], "Link fallback", reqType);
                         });
                     });
                 });
@@ -397,6 +502,14 @@ const server = http.createServer((req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
+
+// Global error handlers to avoid silent crashes
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception:', err && err.stack ? err.stack : err);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled promise rejection:', reason && reason.stack ? reason.stack : reason);
+});
 
 server.listen(PORT, "0.0.0.0", () => {
     console.log("🌟 Red Star Search Hybrid running");
