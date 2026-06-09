@@ -52,6 +52,13 @@ function normalizeResultsFromJson(json) {
 // -----------------------------
 function searchSerpApi(query, callback) {
     if (!getJson) return callback(new Error('SerpApi module not available'), null);
+    let finished = false;
+    const timer = setTimeout(() => {
+        if (finished) return;
+        finished = true;
+        console.error('SerpApi timed out for query', query);
+        return callback(new Error('SerpApi timeout'), null);
+    }, 4000);
     try {
         getJson({
             engine: "google",
@@ -61,16 +68,26 @@ function searchSerpApi(query, callback) {
             gl: "us",
             api_key: SERP_API_KEY
         }, (json) => {
+            if (finished) return;
+            finished = true;
+            clearTimeout(timer);
+            console.log('SerpApi returned callback, type:', typeof json === 'object' ? 'object' : typeof json);
             try {
                 const results = normalizeResultsFromJson(json);
+                console.log('SerpApi normalized results count:', results.length);
                 if (results.length) return callback(null, results);
+                console.error('SerpApi returned zero results for', query);
                 return callback(new Error("no results from serpapi"), null);
             } catch (e) {
                 return callback(e, null);
             }
         });
     } catch (e) {
-        return callback(e, null);
+        if (!finished) {
+            finished = true;
+            clearTimeout(timer);
+            return callback(e, null);
+        }
     }
 }
 
@@ -91,6 +108,10 @@ function rapidApiGet(host, path, callback) {
 
     const req = https.request(options, (res) => {
         let data = '';
+        // Log status for debugging
+        if (res.statusCode && res.statusCode >= 400) {
+            console.error('RapidAPI response status', res.statusCode, 'host', host, 'path', path);
+        }
         res.on('data', c => data += c);
         res.on('end', () => {
             try {
@@ -98,8 +119,10 @@ function rapidApiGet(host, path, callback) {
                 const results = normalizeResultsFromJson(json);
                 return callback(null, results.length ? results : []);
             } catch (e) {
-                // not JSON or parse error — return text as single result if useful
-                return callback(null, []);
+                console.error('RapidAPI parse error for host', host, 'path', path, 'error', e.message);
+                console.error('RapidAPI raw body:', data.slice(0,200));
+                // not JSON or parse error — surface error so caller can log and fallback
+                return callback(new Error('rapidapi parse error'), null);
             }
         });
     });
@@ -163,7 +186,7 @@ function render(query, results, source) {
     <html>
     <head>
         <meta charset="utf-8">
-        <title>Red Star Search(12.10)</title>
+        <title>Red Star Search(12.11)</title>
         <style>
             body { font-family: Arial; background:#eee; padding:20px; }
             .box { background:#fff; padding:10px; margin:10px 0; }
@@ -218,7 +241,7 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.10)</h1>
+            <h1>🌟 Red Star Search (12.11)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
@@ -230,6 +253,7 @@ const server = http.createServer((req, res) => {
     if (q.pathname === "/search") {
 
         const query = q.query.q || "";
+        console.log('Received search request for:', query);
 
         // -----------------------------
         // Provider chain (in order):
@@ -238,26 +262,31 @@ const server = http.createServer((req, res) => {
         // -----------------------------
 
         // 1) SerpApi
+        console.log('Trying SerpApi');
         return searchSerpApi(query, (err, results) => {
             if (!err && results && results.length) return res.end(render(query, results, "SerpApi"));
             if (err) console.error('SerpApi error:', err && err.message ? err.message : err);
 
             // 2) RapidAPI #1
+            console.log('Trying RapidAPI #1');
             return searchRapidAPI1(query, (err1, r1) => {
                 if (!err1 && r1 && r1.length) return res.end(render(query, r1, "RapidAPI #1"));
                 if (err1) console.error('RapidAPI1 error:', err1 && err1.message ? err1.message : err1);
 
                 // 3) RapidAPI #2 (images)
+                console.log('Trying RapidAPI #2 (Images)');
                 return searchRapidAPI2(query, (err2, r2) => {
                     if (!err2 && r2 && r2.length) return res.end(render(query, r2, "RapidAPI #2 (Images)"));
                     if (err2) console.error('RapidAPI2 error:', err2 && err2.message ? err2.message : err2);
 
                     // 4) RapidAPI #3 (patents)
+                    console.log('Trying RapidAPI #3 (Patents)');
                     return searchRapidAPI3(query, (err3, r3) => {
                         if (!err3 && r3 && r3.length) return res.end(render(query, r3, "RapidAPI #3 (Patents)"));
                         if (err3) console.error('RapidAPI3 error:', err3 && err3.message ? err3.message : err3);
 
                         // 5) Wikipedia
+                        console.log('Trying Wikipedia API');
                         return searchWikipedia(query, (errW, wres) => {
                             if (!errW && wres && wres.length) return res.end(render(query, wres, "Wikipedia API"));
                             if (errW) console.error('Wikipedia error:', errW && errW.message ? errW.message : errW);

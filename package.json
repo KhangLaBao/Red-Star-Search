@@ -4,5 +4,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
+  },
+  "dependencies": {
+    "serpapi": "^2.2.1"
   }
 }
