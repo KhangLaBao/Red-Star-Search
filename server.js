@@ -219,7 +219,7 @@ function render(query, results, source) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.13)</h1>
+    <h1>🌟 Red Star Search (Ver 12.14)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -231,39 +231,44 @@ function render(query, results, source) {
     <h2>Results for: ${query}</h2>
     `;
 
-    if (!results.length) {
-        out += `
-            <p><b>No results found.</b></p>
-            <a href="https://en.wikipedia.org/wiki/Special:Search?search=${query}">
-                Wikipedia fallback
-            </a>
-        `;
-    } else {
-        results.slice(0, 10).forEach(r => {
+    // Group results by type for tabs
+    const webResults = (results || []).filter(r => r.type === 'web');
+    const imageResults = (results || []).filter(r => r.type === 'image');
+    const newsResults = (results || []).filter(r => r.type === 'news');
+
+    out += `
+    <div style="margin-top:12px;">
+      <div class="rs-tabs" style="margin-bottom:10px;">
+        <button id="tab-web" onclick="switchTab('web')" style="margin-right:6px;">WEB</button>
+        <button id="tab-images" onclick="switchTab('images')" style="margin-right:6px;">IMAGES</button>
+        <button id="tab-news" onclick="switchTab('news')">NEWS</button>
+      </div>
+
+      <div id="rs-web" class="rs-tabcontent">
+        ${webResults.length ? webResults.map(r => {
             const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
             const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
-            if (r.type === 'image' && r.thumbnail) {
-                out += `
-                <div class="box">
-                    <div><small>Type: Image</small></div>
-                    <img src="${r.thumbnail}" data-img="${encodeURIComponent(r.thumbnail)}" data-title="${encodeURIComponent(r.title)}" onclick="showImage(this.dataset.img,this.dataset.title)" style="max-width:240px; max-height:160px; display:block; cursor:pointer;" alt="${r.title}">
-                    <div><a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a></div>
-                    <br><small>${safeLink || domain}</small>
-                </div>
-            `;
-            } else {
-                out += `
-                <div class="box">
-                    <div><small>Type: ${r.type}</small></div>
-                    <a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a>
-                    ${r.type === 'news' ? `<button onclick="showNews('${encodeURIComponent(r.title)}','${encodeURIComponent(r.snippet)}','${encodeURIComponent(safeLink)}')" style="margin-left:8px">View</button>` : ''}
-                    <br><small>${safeLink || domain}</small>
-                    ${r.snippet ? `<p>${r.snippet}</p>` : ''}
-                </div>
-            `;
-            }
-        });
-    }
+            return `<div class="box"><div><small>Type: web</small></div><a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a><br><small>${safeLink || domain}</small>${r.snippet?`<p>${r.snippet}</p>`:''}</div>`;
+        }).slice(0,50).join('') : '<p><b>No web results.</b></p>'}
+      </div>
+
+      <div id="rs-images" class="rs-tabcontent" style="display:none;">
+        ${imageResults.length ? imageResults.map(r => {
+            const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
+            const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
+            const thumb = r.thumbnail || '';
+            return `<div class="box"><div><small>Type: image</small></div><img src="${thumb}" data-img="${encodeURIComponent(thumb)}" data-title="${encodeURIComponent(r.title)}" onclick="showImage(this.dataset.img,this.dataset.title)" style="max-width:240px; max-height:160px; display:block; cursor:pointer;" alt="${r.title}"><div><a ${safeLink?`href="${safeLink}" target="_blank"`:''}>${r.title}</a></div><br><small>${safeLink || domain}</small></div>`;
+        }).slice(0,50).join('') : '<p><b>No image results.</b></p>'}
+      </div>
+
+      <div id="rs-news" class="rs-tabcontent" style="display:none;">
+        ${newsResults.length ? newsResults.map(r => {
+            const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
+            return `<div class="box"><div><small>Type: news</small></div><a ${safeLink?`href="${safeLink}" target="_blank"`:''}>${r.title}</a> ${r.snippet?`<button onclick="showNews('${encodeURIComponent(r.title)}','${encodeURIComponent(r.snippet)}','${encodeURIComponent(safeLink)}')" style="margin-left:8px">View</button>`:''}<br><small>${safeLink || ''}</small>${r.snippet?`<p>${r.snippet}</p>`:''}</div>`;
+        }).slice(0,50).join('') : '<p><b>No news results.</b></p>'}
+      </div>
+    </div>
+    `;
 
         // modal + scripts for image/news preview
         out += `
@@ -294,7 +299,23 @@ function render(query, results, source) {
                 document.getElementById('rs-modal').style.display = 'flex';
             }catch(e){ console.error(e); }
         }
+        function switchTab(tab){
+            const web = document.getElementById('rs-web');
+            const images = document.getElementById('rs-images');
+            const news = document.getElementById('rs-news');
+            const btnWeb = document.getElementById('tab-web');
+            const btnImages = document.getElementById('tab-images');
+            const btnNews = document.getElementById('tab-news');
+            web.style.display = (tab==='web') ? 'block' : 'none';
+            images.style.display = (tab==='images') ? 'block' : 'none';
+            news.style.display = (tab==='news') ? 'block' : 'none';
+            // simple active styles
+            [btnWeb,btnImages,btnNews].forEach(b=>{ if(b) b.style.background=''; b&&b.classList&&b.classList.remove('active'); });
+            const activeBtn = tab==='web'?btnWeb:(tab==='images'?btnImages:btnNews);
+            if(activeBtn){ activeBtn.style.background='#ddd'; activeBtn.classList.add('active'); }
+        }
         function closeModal(){ document.getElementById('rs-modal').style.display = 'none'; document.getElementById('rs-modal-content').innerHTML=''; }
+        document.addEventListener('DOMContentLoaded', function(){ try{ switchTab('web'); }catch(e){} });
         </script>
         </body></html>`;
     return out;
@@ -312,7 +333,7 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.13)</h1>
+            <h1>🌟 Red Star Search (12.14)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
