@@ -1,7 +1,13 @@
 const http = require("http");
 const https = require("https");
 const url = require("url");
-const { getJson } = require("serpapi");
+let getJson = null;
+try {
+    const serp = require("serpapi");
+    if (serp && serp.getJson) getJson = serp.getJson;
+} catch (e) {
+    console.warn('serpapi not installed; SerpApi provider disabled');
+}
 
 // --- API KEYS / CONFIG ---
 const SERP_API_KEY = "f48359b7370f31c965f4ac42605920376c3797ee39fe7131ec139b3af4fa56ea";
@@ -45,6 +51,7 @@ function normalizeResultsFromJson(json) {
 // SERPAPI (PRIMARY - provided key)
 // -----------------------------
 function searchSerpApi(query, callback) {
+    if (!getJson) return callback(new Error('SerpApi module not available'), null);
     try {
         getJson({
             engine: "google",
