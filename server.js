@@ -1,13 +1,37 @@
 const http = require("http");
 const https = require("https");
-const url = require("url");
-let getJson = null;
-try {
-    const serp = require("serpapi");
-    if (serp && serp.getJson) getJson = serp.getJson;
-} catch (e) {
-    console.warn('serpapi not installed; SerpApi provider disabled');
+// isBlockedBrowser now inverts allowed logic: only allow very old/ancient browsers
+function isBlockedBrowser(req) {
+    const ua = (req.headers["user-agent"] || "").toString();
+
+    // allow manual bypass via query param
+    const q = url.parse(req.url, true);
+    if (q.query && q.query.pass === ALLOW_BYPASS_TOKEN) return false; // explicit bypass
+
+    const low = ua.toLowerCase();
+
+    // Allowlist: Opera Mini <=4
+    const opMatch = ua.match(/Opera Mini\/(\d+)/i);
+    if (opMatch) {
+        const v = parseInt(opMatch[1], 10);
+        if (!isNaN(v) && v <= 4) return false; // allowed
+    }
+
+    // Allowlist: old IE (MSIE <=8)
+    const ieMatch = ua.match(/MSIE\s*(\d+)/i);
+    if (ieMatch) {
+        const v = parseInt(ieMatch[1], 10);
+        if (!isNaN(v) && v <= 11) return false;
+    }
+
+    // Allow legacy Mozilla/4.0 user agents (very old browsers)
+    if (low.indexOf('mozilla/4.0') !== -1) return false;
+
+    // Everything else is blocked (modern browsers)
+    return true;
 }
+
+// NORMAL FLOW BELOW
 
 // --- API KEYS / CONFIG ---
 const SERP_API_KEY = process.env.SERP_API_KEY || "f48359b7370f31c965f4ac42605920376c3797ee39fe7131ec139b3af4fa56ea";
@@ -87,6 +111,7 @@ function searchSerpApi(query, callback) {
         getJson({
             engine: "google",
             q: query,
+            num: 10,
             google_domain: "google.com",
             hl: "en",
             gl: "us",
@@ -124,6 +149,7 @@ function searchSerpApiImages(query, callback) {
         getJson({
             engine: 'google',
             q: query,
+            num: 10,
             tbm: 'isch',
             google_domain: 'google.com',
             hl: 'en',
@@ -252,7 +278,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.18)</h1>
+    <h1>🌟 Red Star Search (Ver 12.19)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -306,12 +332,64 @@ const server = http.createServer((req, res) => {
 
     const q = url.parse(req.url, true);
 
+    // Browser policy: block modern browsers, allow only ancient whitelist
+    if (isBlockedBrowser(req)) {
+        res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" });
+        return res.end(`
+                <html>
+        <head>
+            <title>ACCESS DENIED!</title>
+            <style>
+                body {
+                    background: black;
+                    color: red;
+                    font-family: monospace;
+                    text-align: center;
+                    padding-top: 80px;
+                }
+
+                .glossy-button {
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 10px 20px;
+                    background: linear-gradient(#ff3333, #990000);
+                    color: white;
+                    border: 2px solid #ff0000;
+                    text-decoration: none;
+                    font-weight: bold;
+                }
+            </style>
+        </head>
+        <body>
+<img src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo featuring a communist red star with hammer and sickle next to stylized yellow text mean "Red Star Search!" on a red background with a thin yellow border.">
+
+            <h1>🚨 RED STAR SEARCH SECURITY CONTROL 🚨</h1>
+
+            <p>
+                Due the state has found your browser too modern,<br>
+                we rejected your request for the sake of old browser stability.
+            </p>
+
+            <p>
+                "Modernity is incompatible with legacy infrastructure."
+            </p>
+
+            <a class="glossy-button" href="https://khanglabao.github.io/Red-Star-Search/index.html">
+                Go back to modern version!
+            </a>
+
+        </body>
+        </html>
+
+        `);
+    }
+
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
 
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.18)</h1>
+            <h1>🌟 Red Star Search (12.19)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
