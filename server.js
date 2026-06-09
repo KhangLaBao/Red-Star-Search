@@ -40,11 +40,35 @@ function fetchJSON(searchUrl, callback) {
 // -----------------------------
 function normalizeResultsFromJson(json) {
     if (!json) return [];
-    if (Array.isArray(json)) return json.map(r => ({ title: r.title || r.name || r.title_no_formatting || r.heading || r.query || String(r).slice(0,60), link: r.link || r.url || r.link_url || r.source || r.href || "" }));
-    if (json.organic_results) return json.organic_results.map(r => ({ title: r.title, link: r.link || r.url }));
-    if (json.results) return json.results.map(r => ({ title: r.title || r.name, link: r.link || r.url }));
-    if (json.items) return json.items.map(r => ({ title: r.title || r.name, link: r.link || r.url }));
-    return [];
+    const out = [];
+
+    function push(r, typeHint) {
+        if (!r) return;
+        const title = r.title || r.name || r.heading || r.snippet || r.title_no_formatting || String(r).slice(0,60) || '';
+        let link = r.link || r.url || r.link_url || r.source || r.href || r.displayUrl || r.sourceUrl || '';
+        // image fields
+        const thumbnail = r.thumbnail || r.thumbnail_url || r.thumbnailLink || (r.image && (r.image.src || r.image.url)) || r.image_url || r.thumbnailUrl || null;
+
+        // detect type
+        let type = 'web';
+        const keys = Object.keys(r||{}).join(' ').toLowerCase();
+        if (thumbnail || keys.includes('image') || keys.includes('thumbnail')) type = 'image';
+        if (keys.includes('news') || keys.includes('article') || keys.includes('publisher') || r.published_time) type = 'news';
+        if (typeHint) type = typeHint;
+
+        out.push({ title: title || link || '(no title)', link: link || '', type, snippet: r.snippet || r.summary || '', thumbnail: thumbnail || null });
+    }
+
+    if (Array.isArray(json)) json.forEach(r => push(r));
+    if (json.organic_results) json.organic_results.forEach(r => push(r, 'web'));
+    if (json.results) json.results.forEach(r => push(r));
+    if (json.items) json.items.forEach(r => push(r));
+    if (json.inline_images) json.inline_images.forEach(r => push(r, 'image'));
+    if (json.image_results) json.image_results.forEach(r => push(r, 'image'));
+    if (json.images) json.images.forEach(r => push(r, 'image'));
+    if (json.news_results) json.news_results.forEach(r => push(r, 'news'));
+
+    return out;
 }
 
 // -----------------------------
@@ -216,12 +240,27 @@ function render(query, results, source) {
         `;
     } else {
         results.slice(0, 10).forEach(r => {
-            out += `
+            const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
+            const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
+            if (r.type === 'image' && r.thumbnail) {
+                out += `
                 <div class="box">
-                    <a href="${r.link}" target="_blank">${r.title}</a>
-                    <br><small>${r.link}</small>
+                    <div><small>Type: Image</small></div>
+                    <a href="${safeLink || '#'}" target="_blank"><img src="${r.thumbnail}" style="max-width:240px; max-height:160px; display:block;" alt="${r.title}"></a>
+                    <a href="${safeLink || '#'}" target="_blank">${r.title}</a>
+                    <br><small>${safeLink || domain}</small>
                 </div>
             `;
+            } else {
+                out += `
+                <div class="box">
+                    <div><small>Type: ${r.type}</small></div>
+                    <a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a>
+                    <br><small>${safeLink || domain}</small>
+                    ${r.snippet ? `<p>${r.snippet}</p>` : ''}
+                </div>
+            `;
+            }
         });
     }
 
