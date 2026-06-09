@@ -2,72 +2,67 @@ const http = require("http");
 const https = require("https");
 const url = require("url");
 
-// --------------------
-// FETCH WITH RETRY + TIMEOUT
-// --------------------
-function fetchDuckDuckGo(query, callback, attempt = 1) {
-    const target = "https://lite.duckduckgo.com/lite/?q=" + encodeURIComponent(query);
+// -------------------------
+// DUCKDUCKGO INSTANT API
+// -------------------------
+function searchDDG(query, callback) {
+    const api = "https://api.duckduckgo.com/?q=" 
+        + encodeURIComponent(query) 
+        + "&format=json&no_html=1&skip_disambig=1";
 
-    const req = https.get(target, (res) => {
+    https.get(api, (res) => {
         let data = "";
 
         res.on("data", chunk => data += chunk);
 
         res.on("end", () => {
-            callback(null, data);
+            try {
+                const json = JSON.parse(data);
+                callback(null, json);
+            } catch (e) {
+                callback(e, null);
+            }
         });
-    });
 
-    // IMPORTANT: prevent infinite hang
-    req.setTimeout(8000, () => {
-        req.destroy();
-
-        if (attempt < 3) {
-            return fetchDuckDuckGo(query, callback, attempt + 1);
-        }
-
-        callback(new Error("Timeout"), null);
-    });
-
-    req.on("error", () => {
-        if (attempt < 3) {
-            return fetchDuckDuckGo(query, callback, attempt + 1);
-        }
-        callback(new Error("Request failed"), null);
+    }).on("error", (err) => {
+        callback(err, null);
     });
 }
 
-// --------------------
-// EXTRACT RESULTS (stable regex)
-// --------------------
-function extractResults(html) {
-    const results = [];
-    const seen = {};
-
-    const regex = /<a[^>]+href="(https?:\/\/[^"]+)"[^>]*>(.*?)<\/a>/g;
-
-    let match;
-
-    while ((match = regex.exec(html)) !== null) {
-        let link = match[1];
-        let title = match[2].replace(/<[^>]+>/g, "").trim();
-
-        if (!link || seen[link]) continue;
-        seen[link] = true;
-
-        // skip DDG internal links
-        if (link.includes("duckduckgo.com")) continue;
-
-        results.push({ title, link });
-    }
-
-    return results;
+// -------------------------
+// HTML RENDER
+// -------------------------
+function renderPage(title, content) {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>${title}</title>
+        <style>
+            body { font-family: Arial; padding: 20px; background: #eee; }
+            a { color: #1122cc; }
+            .box { background: white; padding: 10px; border: 1px solid #999; }
+        </style>
+    </head>
+    <body>
+        <h1>🌟 Red Star Search</h1>
+        <form action="/search">
+            <input name="q" style="width:300px;">
+            <button>Search</button>
+        </form>
+        <hr>
+        ${content}
+    </body>
+    </html>
+    `;
 }
 
-// --------------------
+// -------------------------
 // SERVER
-// --------------------
+// -------------------------
 const server = http.createServer((req, res) => {
+
     const q = url.parse(req.url, true);
 
     res.writeHead(200, {
@@ -76,65 +71,75 @@ const server = http.createServer((req, res) => {
 
     // HOME
     if (q.pathname === "/") {
-        return res.end(`
-            <h1>🌟 Red Star Search</h1>
-            <form action="/search">
-                <input name="q" />
-                <button>Search</button>
-            </form>
-        `);
+        return res.end(renderPage("Home", "<p>Enter a query to search.</p>"));
     }
 
     // SEARCH
     if (q.pathname === "/search") {
+
         const query = (q.query.q || "").trim();
 
         if (!query) {
-            return res.end("<h2>Type something</h2>");
+            return res.end(renderPage("Empty", "<p>No query.</p>"));
         }
 
-        fetchDuckDuckGo(query, (err, html) => {
+        searchDDG(query, (err, data) => {
 
-            // --------------------
-            // FALLBACK (NO CRASH)
-            // --------------------
-            if (err || !html) {
-                return res.end(`
-                    <h2>Results for: ${query}</h2>
-                    <p><b>Search engine failed. Showing fallback:</b></p>
-                    <p><a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}">Wikipedia</a></p>
-                    <p><a href="https://www.google.com/search?q=${encodeURIComponent(query)}">Google</a></p>
-                `);
+            // -------------------
+            // FALLBACK MODE
+            // -------------------
+            if (err || !data) {
+                return res.end(renderPage(query, `
+                    <p><b>Search failed.</b></p>
+                    <a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}">
+                        Wikipedia fallback
+                    </a><br>
+                    <a href="https://duckduckgo.com/?q=${encodeURIComponent(query)}">
+                        DuckDuckGo fallback
+                    </a>
+                `));
             }
 
-            const results = extractResults(html);
+            // -------------------
+            // MAIN RESULT
+            // -------------------
+            let content = `<div class="box">`;
 
-            let out = `<h2>Results for: ${query}</h2>`;
+            content += `<h2>${data.Heading || query}</h2>`;
+            content += `<p>${data.AbstractText || "No instant answer found."}</p>`;
 
-            if (!results.length) {
-                out += "<p>No results found.</p>";
-            } else {
-                results.slice(0, 10).forEach(r => {
-                    out += `
-                        <p>
-                            <a href="${r.link}">${r.title || r.link}</a><br>
-                            <small>${r.link}</small>
-                        </p>
-                    `;
+            if (data.AbstractURL) {
+                content += `<a href="${data.AbstractURL}" target="_blank">
+                    Source Link
+                </a>`;
+            }
+
+            content += `</div>`;
+
+            // Related topics (simple)
+            if (data.RelatedTopics && data.RelatedTopics.length) {
+                content += "<h3>Related</h3><ul>";
+
+                data.RelatedTopics.slice(0, 5).forEach(t => {
+                    if (t.FirstURL && t.Text) {
+                        content += `<li><a href="${t.FirstURL}" target="_blank">${t.Text}</a></li>`;
+                    }
                 });
+
+                content += "</ul>";
             }
 
-            res.end(out);
+            res.end(renderPage(query, content));
         });
 
         return;
     }
 
-    res.end("<h1>404</h1>");
+    res.end("404");
 });
 
-// --------------------
+// -------------------------
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, "0.0.0.0", () => {
-    console.log("Red Star Search running on port " + PORT);
+    console.log("🌟 Red Star Search running on port " + PORT);
 });
