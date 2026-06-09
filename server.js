@@ -252,7 +252,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.15)</h1>
+    <h1>🌟 Red Star Search (Ver 12.16)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -348,7 +348,8 @@ function render(query, results, source, currentType) {
             if(activeBtn){ activeBtn.style.background='#ddd'; activeBtn.classList.add('active'); }
         }
         function closeModal(){ document.getElementById('rs-modal').style.display = 'none'; document.getElementById('rs-modal-content').innerHTML=''; }
-        document.addEventListener('DOMContentLoaded', function(){ try{ switchTab('web'); }catch(e){} });
+        // initialize tabs using server-side current type
+        document.addEventListener('DOMContentLoaded', function(){ try{ switchTab('${ct}'); }catch(e){} });
         </script>
         </body></html>`;
     return out;
@@ -383,7 +384,7 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.15)</h1>
+            <h1>🌟 Red Star Search (12.16)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
