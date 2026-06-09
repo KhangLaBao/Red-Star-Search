@@ -1,6 +1,12 @@
 const http = require("http");
 const https = require("https");
 const url = require("url");
+const options = {
+    headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    }
+};
+
 
 // -----------------------------
 // FETCH DUCKDUCKGO HTML RESULTS
@@ -30,13 +36,18 @@ function searchDDG(query, callback) {
 function parseResults(html) {
     const results = [];
 
-    const regex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g;
+    // Step 1: extract ALL links from results page
+    const regex = /<a[^>]+href="([^"]+)"[^>]*class="[^"]*result__a[^"]*"[^>]*>(.*?)<\/a>/g;
 
     let match;
 
     while ((match = regex.exec(html)) !== null) {
         let link = cleanLink(match[1]);
-        let title = match[2].replace(/<.*?>/g, "").trim();
+        let title = match[2].replace(/<[^>]*>/g, "").trim();
+
+        // filter garbage links
+        if (!title || !link) continue;
+        if (link.includes("duckduckgo.com/y.js")) continue;
 
         results.push({ title, link });
     }
@@ -46,14 +57,29 @@ function parseResults(html) {
 
 function cleanLink(url) {
     try {
+        // Case 1: DuckDuckGo redirect with uddg=
         if (url.includes("uddg=")) {
-            return decodeURIComponent(url.split("uddg=")[1]);
+            const part = url.split("uddg=")[1];
+            return decodeURIComponent(part);
         }
+
+        // Case 2: relative DDG redirect
+        if (url.startsWith("/l/?")) {
+            const part = url.split("uddg=")[1];
+            if (part) return decodeURIComponent(part);
+        }
+
+        // Case 3: protocol-relative links
+        if (url.startsWith("//")) {
+            return "https:" + url;
+        }
+
         return url;
-    } catch {
+    } catch (e) {
         return url;
     }
 }
+
 // -----------------------------
 // HTML PAGE RENDER
 // -----------------------------
