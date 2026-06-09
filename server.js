@@ -1,57 +1,70 @@
 const http = require("http");
 const https = require("https");
 const url = require("url");
-const options = {
-    headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    }
-};
-
 
 // -----------------------------
-// FETCH DUCKDUCKGO HTML RESULTS
+// FETCH JSON (SearXNG)
 // -----------------------------
-function searchDDG(query, callback) {
-    const searchUrl =
-        "https://duckduckgo.com/html/?q=" +
-        encodeURIComponent(query);
-
+function fetchJSON(searchUrl, callback) {
     https.get(searchUrl, (res) => {
         let data = "";
 
-        res.on("data", chunk => data += chunk);
+        res.on("data", c => data += c);
 
-res.on("end", () => {
-    console.log("RAW HTML START >>>");
-    console.log(data.slice(0, 1000));
-    console.log("RAW HTML END <<<");
+        res.on("end", () => {
+            try {
+                callback(null, JSON.parse(data));
+            } catch (e) {
+                callback(e, null);
+            }
+        });
 
-    callback(null, data);
-});
-
-    }).on("error", (err) => {
-        callback(err, null);
-    });
+    }).on("error", err => callback(err, null));
 }
 
 // -----------------------------
-// PARSE RESULTS (FROGFIND STYLE)
+// SEARXNG SEARCH (PRIMARY)
 // -----------------------------
-function parseResults(html) {
-    const results = [];
+function searchSearx(query, callback) {
+    const url = `https://searx.be/search?q=${encodeURIComponent(query)}&format=json`;
+    fetchJSON(url, callback);
+}
 
-    // Step 1: extract ALL links from results page
-    const regex = /<a[^>]+href="([^"]+)"[^>]*class="[^"]*result__a[^"]*"[^>]*>(.*?)<\/a>/g;
+// -----------------------------
+// DUCKDUCKGO FALLBACK (HTML)
+// -----------------------------
+function searchDDG(query, callback) {
+    const url = "https://duckduckgo.com/html/?q=" + encodeURIComponent(query);
+
+    https.get(url, {
+        headers: {
+            "User-Agent": "Mozilla/5.0"
+        }
+    }, (res) => {
+
+        let data = "";
+
+        res.on("data", c => data += c);
+
+        res.on("end", () => {
+            callback(null, data);
+        });
+
+    }).on("error", err => callback(err, null));
+}
+
+// -----------------------------
+// PARSE DDG HTML
+// -----------------------------
+function parseDDG(html) {
+    const results = [];
+    const regex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g;
 
     let match;
 
     while ((match = regex.exec(html)) !== null) {
-        let link = cleanLink(match[1]);
+        let link = match[1];
         let title = match[2].replace(/<[^>]*>/g, "").trim();
-
-        // filter garbage links
-        if (!title || !link) continue;
-        if (link.includes("duckduckgo.com/y.js")) continue;
 
         results.push({ title, link });
     }
@@ -59,61 +72,37 @@ function parseResults(html) {
     return results;
 }
 
-function cleanLink(url) {
-    try {
-        // Case 1: DuckDuckGo redirect with uddg=
-        if (url.includes("uddg=")) {
-            const part = url.split("uddg=")[1];
-            return decodeURIComponent(part);
-        }
-
-        // Case 2: relative DDG redirect
-        if (url.startsWith("/l/?")) {
-            const part = url.split("uddg=")[1];
-            if (part) return decodeURIComponent(part);
-        }
-
-        // Case 3: protocol-relative links
-        if (url.startsWith("//")) {
-            return "https:" + url;
-        }
-
-        return url;
-    } catch (e) {
-        return url;
-    }
-}
-
 // -----------------------------
-// HTML PAGE RENDER
+// RENDER HTML
 // -----------------------------
-function renderPage(query, results) {
-    let output = `
+function render(query, results, source) {
+    let out = `
     <html>
     <head>
         <meta charset="utf-8">
-        <title>Red Star Search</title>
+        <title>Red Star Search(12.9)</title>
         <style>
             body { font-family: Arial; background:#eee; padding:20px; }
-            a { color:#0000EE; }
-            .box { background:white; padding:10px; margin:10px 0; }
+            .box { background:#fff; padding:10px; margin:10px 0; }
+            a { color:blue; }
         </style>
     </head>
     <body>
-        <h1>🌟 Red Star Search (Ver 12.8)</h1>
 
-        <form action="/search">
-            <input name="q" value="${query}" style="width:300px;">
-            <button>Search</button>
-        </form>
+    <h1>🌟 Red Star Search</h1>
 
-        <hr>
+    <form action="/search">
+        <input name="q" value="${query}" style="width:300px;">
+        <button>Search</button>
+    </form>
 
-        <h2>Results for: ${query}</h2>
+    <p><small>Source: ${source}</small></p>
+
+    <h2>Results for: ${query}</h2>
     `;
 
     if (!results.length) {
-        output += `
+        out += `
             <p><b>No results found.</b></p>
             <a href="https://en.wikipedia.org/wiki/Special:Search?search=${query}">
                 Wikipedia fallback
@@ -121,22 +110,17 @@ function renderPage(query, results) {
         `;
     } else {
         results.slice(0, 10).forEach(r => {
-            output += `
+            out += `
                 <div class="box">
                     <a href="${r.link}" target="_blank">${r.title}</a>
-                    <br>
-                    <small>${r.link}</small>
+                    <br><small>${r.link}</small>
                 </div>
             `;
         });
     }
 
-    output += `
-    </body>
-    </html>
-    `;
-
-    return output;
+    out += "</body></html>";
+    return out;
 }
 
 // -----------------------------
@@ -146,14 +130,12 @@ const server = http.createServer((req, res) => {
 
     const q = url.parse(req.url, true);
 
-    res.writeHead(200, {
-        "Content-Type": "text/html; charset=utf-8"
-    });
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
 
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search</h1>
+            <h1>🌟 Red Star Search (12.9)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
@@ -166,26 +148,49 @@ const server = http.createServer((req, res) => {
 
         const query = q.query.q || "";
 
-        searchDDG(query, (err, html) => {
+        // -----------------------------
+        // STEP 1: SEARXNG
+        // -----------------------------
+        searchSearx(query, (err, data) => {
 
-            if (err || !html) {
-                return res.end(renderPage(query, []));
+            if (!err && data && data.results && data.results.length) {
+
+                const results = data.results.map(r => ({
+                    title: r.title,
+                    link: r.url
+                }));
+
+                return res.end(render(query, results, "SearXNG"));
             }
 
-            const results = parseResults(html);
+            // -----------------------------
+            // STEP 2: DDG fallback
+            // -----------------------------
+            searchDDG(query, (err2, html) => {
 
-            return res.end(renderPage(query, results));
+                if (!err2 && html) {
+
+                    const results = parseDDG(html);
+
+                    if (results.length) {
+                        return res.end(render(query, results, "DuckDuckGo HTML"));
+                    }
+                }
+
+                // -----------------------------
+                // STEP 3: FINAL fallback
+                // -----------------------------
+                return res.end(render(query, [], "Wikipedia fallback"));
+            });
         });
 
         return;
     }
 
-    res.end("404");
 });
 
-// -----------------------------
 const PORT = process.env.PORT || 10000;
 
 server.listen(PORT, "0.0.0.0", () => {
-    console.log("🌟 Red Star Search running on port " + PORT);
+    console.log("🌟 Red Star Search Hybrid running");
 });
