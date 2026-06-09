@@ -2,71 +2,107 @@ const http = require("http");
 const https = require("https");
 const url = require("url");
 
-// -------------------------
-// DUCKDUCKGO INSTANT API
-// -------------------------
+// -----------------------------
+// FETCH DUCKDUCKGO HTML RESULTS
+// -----------------------------
 function searchDDG(query, callback) {
-    const api = "https://api.duckduckgo.com/?q="
-        + encodeURIComponent(query)
-        + "&format=json&no_html=1&skip_disambig=1";
+    const searchUrl =
+        "https://duckduckgo.com/html/?q=" +
+        encodeURIComponent(query);
 
-    const req = https.get(api, (res) => {
+    https.get(searchUrl, (res) => {
         let data = "";
 
         res.on("data", chunk => data += chunk);
 
         res.on("end", () => {
-            try {
-                const json = JSON.parse(data);
-                callback(null, json);
-            } catch (e) {
-                callback(e, null);
-            }
+            callback(null, data);
         });
-    });
 
-    // 🚩 IMPORTANT: prevent infinite hanging
-    req.setTimeout(6000, () => {
-        req.destroy();
-        callback(new Error("timeout"), null);
-    });
-
-    req.on("error", (err) => {
+    }).on("error", (err) => {
         callback(err, null);
     });
 }
-// -------------------------
-// HTML RENDER
-// -------------------------
-function renderPage(title, content) {
-    return `
-    <!DOCTYPE html>
+
+// -----------------------------
+// PARSE RESULTS (FROGFIND STYLE)
+// -----------------------------
+function parseResults(html) {
+    const results = [];
+
+    // match result blocks (DuckDuckGo HTML structure)
+    const regex = /<a rel="nofollow" class="result__a" href="(.*?)".*?>(.*?)<\/a>/g;
+
+    let match;
+
+    while ((match = regex.exec(html)) !== null) {
+        const link = match[1];
+        const title = match[2].replace(/<[^>]*>/g, "");
+
+        results.push({ title, link });
+    }
+
+    return results;
+}
+
+// -----------------------------
+// HTML PAGE RENDER
+// -----------------------------
+function renderPage(query, results) {
+    let output = `
     <html>
     <head>
-        <meta charset="UTF-8">
-        <title>${title}</title>
+        <meta charset="utf-8">
+        <title>Red Star Search</title>
         <style>
-            body { font-family: Arial; padding: 20px; background: #eee; }
-            a { color: #1122cc; }
-            .box { background: white; padding: 10px; border: 1px solid #999; }
+            body { font-family: Arial; background:#eee; padding:20px; }
+            a { color:#0000EE; }
+            .box { background:white; padding:10px; margin:10px 0; }
         </style>
     </head>
     <body>
         <h1>🌟 Red Star Search</h1>
+
         <form action="/search">
-            <input name="q" style="width:300px;">
+            <input name="q" value="${query}" style="width:300px;">
             <button>Search</button>
         </form>
+
         <hr>
-        ${content}
+
+        <h2>Results for: ${query}</h2>
+    `;
+
+    if (!results.length) {
+        output += `
+            <p><b>No results found.</b></p>
+            <a href="https://en.wikipedia.org/wiki/Special:Search?search=${query}">
+                Wikipedia fallback
+            </a>
+        `;
+    } else {
+        results.slice(0, 10).forEach(r => {
+            output += `
+                <div class="box">
+                    <a href="${r.link}" target="_blank">${r.title}</a>
+                    <br>
+                    <small>${r.link}</small>
+                </div>
+            `;
+        });
+    }
+
+    output += `
     </body>
     </html>
     `;
+
+    return output;
 }
 
-// -------------------------
+// -----------------------------
 // SERVER
-// -------------------------
+// -----------------------------
 const server = http.createServer((req, res) => {
 
     const q = url.parse(req.url, true);
@@ -77,65 +113,29 @@ const server = http.createServer((req, res) => {
 
     // HOME
     if (q.pathname === "/") {
-        return res.end(renderPage("Home", "<p>Enter a query to search.</p>"));
+        return res.end(`
+            <h1>🌟 Red Star Search</h1>
+            <form action="/search">
+                <input name="q">
+                <button>Search</button>
+            </form>
+        `);
     }
 
     // SEARCH
     if (q.pathname === "/search") {
 
-        const query = (q.query.q || "").trim();
+        const query = q.query.q || "";
 
-        if (!query) {
-            return res.end(renderPage("Empty", "<p>No query.</p>"));
-        }
+        searchDDG(query, (err, html) => {
 
-        searchDDG(query, (err, data) => {
-
-            // -------------------
-            // FALLBACK MODE
-            // -------------------
-            if (err || !data) {
-                return res.end(renderPage(query, `
-                    <p><b>Search failed.</b></p>
-                    <a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}">
-                        Wikipedia fallback
-                    </a><br>
-                    <a href="https://duckduckgo.com/?q=${encodeURIComponent(query)}">
-                        DuckDuckGo fallback
-                    </a>
-                `));
+            if (err || !html) {
+                return res.end(renderPage(query, []));
             }
 
-            // -------------------
-            // MAIN RESULT
-            // -------------------
-            let content = `<div class="box">`;
+            const results = parseResults(html);
 
-            content += `<h2>${data.Heading || query}</h2>`;
-            content += `<p>${data.AbstractText || "No instant answer found."}</p>`;
-
-            if (data.AbstractURL) {
-                content += `<a href="${data.AbstractURL}" target="_blank">
-                    Source Link
-                </a>`;
-            }
-
-            content += `</div>`;
-
-            // Related topics (simple)
-            if (data.RelatedTopics && data.RelatedTopics.length) {
-                content += "<h3>Related</h3><ul>";
-
-                data.RelatedTopics.slice(0, 5).forEach(t => {
-                    if (t.FirstURL && t.Text) {
-                        content += `<li><a href="${t.FirstURL}" target="_blank">${t.Text}</a></li>`;
-                    }
-                });
-
-                content += "</ul>";
-            }
-
-            res.end(renderPage(query, content));
+            return res.end(renderPage(query, results));
         });
 
         return;
@@ -144,8 +144,9 @@ const server = http.createServer((req, res) => {
     res.end("404");
 });
 
-// -------------------------
+// -----------------------------
 const PORT = process.env.PORT || 10000;
+
 server.listen(PORT, "0.0.0.0", () => {
     console.log("🌟 Red Star Search running on port " + PORT);
 });
