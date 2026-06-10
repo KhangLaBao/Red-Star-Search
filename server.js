@@ -252,7 +252,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.18)</h1>
+    <h1>🌟 Red Star Search (Ver 12.20)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -306,12 +306,65 @@ const server = http.createServer((req, res) => {
 
     const q = url.parse(req.url, true);
 
+    // --- Browser blocking middleware based on User-Agent
+    const ua = (req.headers['user-agent'] || '').toString();
+
+    function majorFrom(regex) {
+        const m = ua.match(regex);
+        if (!m) return null;
+        const v = parseInt(m[1].split('.')[0], 10);
+        return Number.isNaN(v) ? null : v;
+    }
+
+    const isIE = /MSIE |Trident\//i.test(ua);
+    const isOperaMini = /Opera Mini\/(\d+)/i.test(ua);
+    const isOPR = /OPR\/(\d+)/i.test(ua);
+    const isOperaOld = /Opera\/(\d+)/i.test(ua);
+    const isChrome = /Chrome\/(\d+)/i.test(ua) && !/OPR\//i.test(ua) && !/Edg\//i.test(ua) && !/Chromium/i.test(ua) && !/CriOS/i.test(ua);
+    const isFirefox = /Firefox\/(\d+)/i.test(ua);
+    const isSafari = /Version\/(\d+)/i.test(ua) && /Safari\//i.test(ua) && !/Chrome|CriOS|Chromium|OPR|Edg/i.test(ua);
+
+    const chromeMajor = majorFrom(/Chrome\/(\d+)/i);
+    const firefoxMajor = majorFrom(/Firefox\/(\d+)/i);
+    const safariMajor = majorFrom(/Version\/(\d+)/i);
+    const oprMajor = majorFrom(/OPR\/(\d+)/i);
+    const operaMajor = majorFrom(/Opera\/(\d+)/i);
+    const operaMiniMajor = majorFrom(/Opera Mini\/(\d+)/i);
+
+    let blocked = false;
+
+    // Internet Explorer: block all versions
+    if (isIE) blocked = true;
+
+    // Google Chrome: block Chrome 51+
+    else if (isChrome && chromeMajor !== null && chromeMajor >= 51) blocked = true;
+
+    // Firefox: allow up to v52, block v53+
+    else if (isFirefox && firefoxMajor !== null && firefoxMajor >= 53) blocked = true;
+
+    // Safari (Apple): allow up to v9, block v10+
+    else if (isSafari && safariMajor !== null && safariMajor >= 10) blocked = true;
+
+    // Opera (Chromium-based): OPR/15+ -> block
+    else if (isOPR && oprMajor !== null && oprMajor >= 15) blocked = true;
+
+    // Opera old (Presto) — allow up to 12; treat >12 as modern/blocked
+    else if (!isOPR && isOperaOld && operaMajor !== null && operaMajor > 12) blocked = true;
+
+    // Opera Mini: allow up to v9, block v10+
+    else if (operaMiniMajor !== null && operaMiniMajor >= 10) blocked = true;
+
+    if (blocked) {
+        res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" });
+        return res.end(`<html><body><h1>Access blocked</h1><p>Your browser is not supported by this site. Please use an older/legacy browser.</p></body></html>`);
+    }
+
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
 
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.18)</h1>
+            <h1>🌟 Red Star Search (12.20)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
