@@ -217,6 +217,21 @@
   window.onload = function () {
     setupUsername();
     showWelcome();
+    // Populate search input with query parameter so term remains until changed
+    try {
+      var qParam = new URLSearchParams(window.location.search).get('q');
+      var inp = document.querySelector('input.legacy-input[name="q"]') || document.querySelector('input.legacy-input');
+      if (qParam) {
+        if (inp) { inp.value = qParam; localStorage.setItem('rss_last_q', qParam); }
+      } else {
+        var last = localStorage.getItem('rss_last_q');
+        if (last && inp && !inp.value) inp.value = last;
+      }
+      if (inp) {
+        var form = inp.form || document.querySelector('form');
+        if (form) form.addEventListener('submit', function () { localStorage.setItem('rss_last_q', inp.value || ''); });
+      }
+    } catch (e) { /* ignore URL parsing issues */ }
 
     setInterval(fixStats, 400);
     setInterval(polishRedStar, 500);

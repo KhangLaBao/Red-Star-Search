@@ -31,6 +31,17 @@ let usageDay = (new Date()).toISOString().slice(0,10);
 // Track month for monthly resets (YYYY-MM)
 let usageMonth = (new Date()).toISOString().slice(0,7);
 
+// remember last search query so the home page can show it
+let lastQuery = '';
+
+// simple html escape to avoid injecting raw user input into pages
+function escapeHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, function (c) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c];
+    });
+}
+
 // Allow overriding SerpApi reported usage from environment (useful to sync with provider)
 if (process.env.SERP_API_USED || process.env.SERP_API_LIMIT) {
     try {
@@ -358,11 +369,12 @@ function render(query, results, source, currentType) {
                 .search-input{ width:60% }
                 .thumb{ display:none }
             }
+
         </style>
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.28)</h1>
+    <h1>🌟 Red Star Search (Ver 12.29)</h1>
     <a href="https://red-star-search.onrender.com" style="display:inline-block;margin-bottom:12px;">&larr; Go back to HomePage!</a>
 
     <form action="/search" class="search-form">
@@ -521,16 +533,52 @@ const server = http.createServer((req, res) => {
         </head>
         <body>
             <div class="page-wrap">
-                <h1>🌟 Red Star Search (12.28)</h1>
+                <h1>🌟 Red Star Search (12.29)</h1>
                 <img class="logo" src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo">
                 <form action="/search" class="search-form">
-                    <input name="q" class="search-input">
+                    <input name="q" class="search-input" value="${escapeHtml(lastQuery)}">
                     <button class="search-btn">Search</button>
                 </form>
                 ${getApiUsageHtml()}
                 <p class="note">Classic interface: Web 2.0 / WAP retro styling for this search UI only.</p>
             </div>
             <p>The counter may not accurate!</p>
+
+<div class="notice-box">
+    <b>📢 STATE INFORMATION BUREAU NOTICE 📢</b><br><br>
+
+    Citizen, if your search appears slow, do not strike
+    the monitor.
+
+    The Render Central Search Computer Server is currently
+    being awakened from an energy-conservation cycle.
+
+    Archive personnel have been notified and are rushing
+    toward the filing cabinets.
+
+    Please allow one to two minutes for the machine to
+    consume sufficient electricity and resume glorious
+    operation.
+
+    If more than three to five minutes have passed and
+    your search request remains unfinished, please refresh
+    the page or try again later. The machine may be
+    experiencing an unusually stubborn awakening cycle.
+
+    Thank you for your patience and continued support of
+    reliable, but occasionally sleepy, infrastructure.
+
+    Glory to low-bandwidth computing.
+</div>
+
+            <style> .notice-box {
+    background: #fff8d5;
+    border: 2px solid #aa8800;
+    padding: 10px;
+    margin: 10px 0;
+    color: #000;
+    font-size: 14px;
+}</style>
         </body>
         </html>
         `);

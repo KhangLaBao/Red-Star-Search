@@ -66,9 +66,21 @@ function polishMobile() {
 }
 setInterval(polishMobile, 500);
 
-// Tự điền từ khóa vào ô tìm kiếm
-const q = new URLSearchParams(window.location.search).get('q');
-if (q) { document.getElementById("searchBox").value = q; }
+// Persist and prefill keyword using localStorage
+(function(){
+  try {
+    var qParam = new URLSearchParams(window.location.search).get('q');
+    var box = document.getElementById('searchBox');
+    if (!box) return;
+    if (qParam) { box.value = qParam; localStorage.setItem('rss_last_q', qParam); }
+    else {
+      var last = localStorage.getItem('rss_last_q');
+      if (last && !box.value) box.value = last;
+    }
+    var form = box.form;
+    if (form) form.addEventListener('submit', function(){ localStorage.setItem('rss_last_q', box.value || ''); });
+  } catch (e) { /* ignore */ }
+})();
 </script>
 
 </body>
