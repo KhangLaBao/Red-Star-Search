@@ -245,18 +245,49 @@ function render(query, results, source, currentType) {
         <meta charset="utf-8">
         <title>Red Star Search(12.11)</title>
         <style>
-            body { font-family: Arial; background:#eee; padding:20px; }
-            .box { background:#fff; padding:10px; margin:10px 0; }
-            a { color:blue; }
+            /* Ancient 2000-era WAP / web2.0 inspired styles (for this page only) */
+            body{
+                font-family: Verdana, Arial, Helvetica, sans-serif;
+                background-color:#c0c0c0;
+                color:#000;
+                padding:14px;
+                font-size:13px;
+            }
+            .page-wrap{ max-width:760px; margin:0 auto; }
+            .logo{ display:block; margin-bottom:12px }
+            .search-form{ background:#f7f3e0; border:2px outset #fff; padding:8px; border-radius:4px }
+            .search-input{ width:72%; padding:6px; border:2px inset #999; background:#fff9e6; font-size:14px }
+            .search-btn{ padding:6px 10px; margin-left:6px; background:#ffdf80; border:2px solid #a06000; color:#000; font-weight:bold; cursor:pointer }
+            .search-btn:active{ position:relative; top:1px }
+
+            .note{ font-size:11px; color:#333 }
+
+            .box{ background:#fff; padding:10px; margin:10px 0; border:2px solid #000; box-shadow:none }
+            .result-title a{ color:#004080; font-weight:bold; text-decoration:underline }
+            .result-meta{ color:#006400; font-size:12px; margin-top:6px }
+            .result-snippet{ color:#222; font-size:13px; margin-top:8px }
+
+            /* little beveled thumbnail area */
+            .result-row{ display:flex; gap:8px }
+            .thumb{ width:64px; height:48px; background:#eee; border:1px solid #999; text-align:center; line-height:48px; font-size:11px; color:#666 }
+
+            /* retro link coloring */
+            a{ color:#0000aa }
+
+            /* small-screen fallback */
+            @media (max-width:480px){
+                .search-input{ width:60% }
+                .thumb{ display:none }
+            }
         </style>
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.23)</h1>
+    <h1>🌟 Red Star Search (Ver 12.24)</h1>
 
-    <form action="/search">
-        <input name="q" value="${query}" style="width:300px;">
-        <button>Search</button>
+    <form action="/search" class="search-form">
+        <input name="q" class="search-input" value="${query}">
+        <button class="search-btn">Search</button>
     </form>
 
     <p><small>Source: ${source}</small></p>
@@ -377,12 +408,33 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.23)</h1>
-            <img src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo featuring a communist red star with hammer and sickle next to stylized yellow text mean Red Star Search! on a red background with a thin yellow border.">
-            <form action="/search">
-                <input name="q">
-                <button>Search</button>
-            </form>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Red Star Search</title>
+            <style>
+                /* Ancient 2000-era WAP / web2.0 inspired styles (home page) */
+                body{ font-family: Verdana, Arial, Helvetica, sans-serif; background-color:#c0c0c0; color:#000; padding:14px; font-size:13px }
+                .page-wrap{ max-width:760px; margin:0 auto }
+                .logo{ display:block; margin-bottom:12px }
+                .search-form{ background:#f7f3e0; border:2px outset #fff; padding:8px; border-radius:4px }
+                .search-input{ width:72%; padding:6px; border:2px inset #999; background:#fff9e6; font-size:14px }
+                .search-btn{ padding:6px 10px; margin-left:6px; background:#ffdf80; border:2px solid #a06000; color:#000; font-weight:bold; cursor:pointer }
+                a{ color:#0000aa }
+            </style>
+        </head>
+        <body>
+            <div class="page-wrap">
+                <h1>🌟 Red Star Search (12.24)</h1>
+                <img class="logo" src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo">
+                <form action="/search" class="search-form">
+                    <input name="q" class="search-input">
+                    <button class="search-btn">Search</button>
+                </form>
+                <p class="note">Classic interface: Web 2.0 / WAP retro styling for this search UI only.</p>
+            </div>
+        </body>
+        </html>
         `);
     }
 
@@ -390,7 +442,6 @@ const server = http.createServer((req, res) => {
     if (q.pathname === "/search") {
 
         const query = q.query.q || "";
-        const reqType = (q.query && q.query.type) ? String(q.query.type).toLowerCase() : 'web';
         console.log('Received search request for:', query, 'type:', reqType);
 
         // -----------------------------
