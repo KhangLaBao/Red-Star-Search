@@ -20,7 +20,7 @@ const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || "fe7f18dd34msh28d6ac0d74956fbp1
 // Set daily limits via env vars: SERP_DAILY_LIMIT, RAPID1_DAILY_LIMIT, RAPID2_DAILY_LIMIT, RAPID3_DAILY_LIMIT, WIKI_DAILY_LIMIT
 // -----------------------------
 const API_LIMITS = {
-    serp: Number(process.env.SERP_DAILY_LIMIT || 1000),
+    serp: Number(process.env.SERP_DAILY_LIMIT || 250),
     rapid1: Number(process.env.RAPID1_DAILY_LIMIT || 10000),
     rapid2: Number(process.env.RAPID2_DAILY_LIMIT || 10000),
     rapid3: Number(process.env.RAPID3_DAILY_LIMIT || 10000),
@@ -362,7 +362,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.26)</h1>
+    <h1>🌟 Red Star Search (Ver 12.27)</h1>
 
     <form action="/search" class="search-form">
         <input name="q" class="search-input" value="${query}">
@@ -520,7 +520,7 @@ const server = http.createServer((req, res) => {
         </head>
         <body>
             <div class="page-wrap">
-                <h1>🌟 Red Star Search (12.26)</h1>
+                <h1>🌟 Red Star Search (12.27)</h1>
                 <img class="logo" src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo">
                 <form action="/search" class="search-form">
                     <input name="q" class="search-input">
@@ -529,6 +529,7 @@ const server = http.createServer((req, res) => {
                 ${getApiUsageHtml()}
                 <p class="note">Classic interface: Web 2.0 / WAP retro styling for this search UI only.</p>
             </div>
+            <p>The counter may not accurate!</p>
         </body>
         </html>
         `);
