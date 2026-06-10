@@ -16,6 +16,71 @@ const SERP_API_KEY = process.env.SERP_API_KEY || "f48359b7370f31c965f4ac42605920
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || "fe7f18dd34msh28d6ac0d74956fbp12b4afjsnb31038159c43";
 
 // -----------------------------
+// API quotas & usage tracking (simple in-memory daily counters)
+// Set daily limits via env vars: SERP_DAILY_LIMIT, RAPID1_DAILY_LIMIT, RAPID2_DAILY_LIMIT, RAPID3_DAILY_LIMIT, WIKI_DAILY_LIMIT
+// -----------------------------
+const API_LIMITS = {
+    serp: Number(process.env.SERP_DAILY_LIMIT || 1000),
+    rapid1: Number(process.env.RAPID1_DAILY_LIMIT || 10000),
+    rapid2: Number(process.env.RAPID2_DAILY_LIMIT || 10000),
+    rapid3: Number(process.env.RAPID3_DAILY_LIMIT || 10000),
+    wiki: Number(process.env.WIKI_DAILY_LIMIT || 10000)
+};
+let API_USAGE = { serp: 0, rapid1: 0, rapid2: 0, rapid3: 0, wiki: 0 };
+let usageDay = (new Date()).toISOString().slice(0,10);
+// Track month for monthly resets (YYYY-MM)
+let usageMonth = (new Date()).toISOString().slice(0,7);
+
+// Allow overriding SerpApi reported usage from environment (useful to sync with provider)
+if (process.env.SERP_API_USED || process.env.SERP_API_LIMIT) {
+    try {
+        if (process.env.SERP_API_LIMIT) API_LIMITS.serp = Number(process.env.SERP_API_LIMIT);
+        if (process.env.SERP_API_USED) API_USAGE.serp = Number(process.env.SERP_API_USED);
+    } catch (e) { /* ignore parse errors */ }
+}
+
+function checkResetUsage() {
+    const today = (new Date()).toISOString().slice(0,10);
+    const month = (new Date()).toISOString().slice(0,7);
+    // Monthly reset has priority: if month changed, zero counters for new month
+    if (month !== usageMonth) {
+        API_USAGE = { serp: 0, rapid1: 0, rapid2: 0, rapid3: 0, wiki: 0 };
+        usageMonth = month;
+        usageDay = today;
+        return;
+    }
+    // Daily reset (within same month)
+    if (today !== usageDay) {
+        API_USAGE = { serp: 0, rapid1: 0, rapid2: 0, rapid3: 0, wiki: 0 };
+        usageDay = today;
+    }
+}
+
+function recordUsage(provider) {
+    if (!API_USAGE.hasOwnProperty(provider)) return;
+    API_USAGE[provider] = (API_USAGE[provider] || 0) + 1;
+}
+
+function getApiUsageHtml() {
+    function pctLeft(limit, used) { if (!limit) return 0; return Math.max(0, Math.round((1 - (used / limit)) * 100)); }
+    const serpLeft = pctLeft(API_LIMITS.serp, API_USAGE.serp);
+    const r1Left = pctLeft(API_LIMITS.rapid1, API_USAGE.rapid1);
+    const r2Left = pctLeft(API_LIMITS.rapid2, API_USAGE.rapid2);
+    const r3Left = pctLeft(API_LIMITS.rapid3, API_USAGE.rapid3);
+    const wikiLeft = pctLeft(API_LIMITS.wiki, API_USAGE.wiki);
+    return `
+        <div class="api-usage" style="margin-top:8px;font-size:12px;color:#333">
+            <strong>API quotas left:</strong>
+            <div>SerpApi: ${serpLeft}% (${API_USAGE.serp}/${API_LIMITS.serp})</div>
+            <div>RapidAPI #1: ${r1Left}% (${API_USAGE.rapid1}/${API_LIMITS.rapid1})</div>
+            <div>RapidAPI #2: ${r2Left}% (${API_USAGE.rapid2}/${API_LIMITS.rapid2})</div>
+            <div>RapidAPI #3: ${r3Left}% (${API_USAGE.rapid3}/${API_LIMITS.rapid3})</div>
+            <div>Wikipedia: ${wikiLeft}% (${API_USAGE.wiki}/${API_LIMITS.wiki})</div>
+        </div>
+    `;
+}
+
+// -----------------------------
 // FETCH JSON (SearXNG)
 // -----------------------------
 function fetchJSON(searchUrl, callback) {
@@ -78,6 +143,8 @@ function normalizeResultsFromJson(json) {
 // -----------------------------
 function searchSerpApi(query, callback) {
     if (!getJson) return callback(new Error('SerpApi module not available'), null);
+    // record that we're making a SerpApi call
+    recordUsage('serp');
     let finished = false;
     const timer = setTimeout(() => {
         if (finished) return;
@@ -122,6 +189,8 @@ function searchSerpApi(query, callback) {
 // -----------------------------
 function searchSerpApiImages(query, callback) {
     if (!getJson) return callback(new Error('SerpApi module not available'), null);
+    // record that we're making a SerpApi image call
+    recordUsage('serp');
     try {
         getJson({
             engine: 'google',
@@ -149,6 +218,13 @@ function searchSerpApiImages(query, callback) {
 // RAPIDAPI GENERIC CALL
 // -----------------------------
 function rapidApiGet(host, path, callback) {
+    // Map host to a rapid provider key and record usage
+    try {
+        if (host && host.indexOf('google-search74') !== -1) recordUsage('rapid1');
+        else if (host && host.indexOf('google-search72') !== -1) recordUsage('rapid2');
+        else if (host && host.indexOf('google-search-master-mega') !== -1) recordUsage('rapid3');
+        else recordUsage('rapid1');
+    } catch (e) {}
     const options = {
         hostname: host,
         path: path,
@@ -218,6 +294,8 @@ function searchRapidAPI3(query, callback) {
 // WIKIPEDIA API
 // -----------------------------
 function searchWikipedia(query, callback) {
+    // record wiki usage
+    recordUsage('wiki');
     const searchUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(query) + '&format=json';
     https.get(searchUrl, (res) => {
         let data = '';
@@ -284,7 +362,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.25)</h1>
+    <h1>🌟 Red Star Search (Ver 12.26)</h1>
 
     <form action="/search" class="search-form">
         <input name="q" class="search-input" value="${query}">
@@ -292,7 +370,6 @@ function render(query, results, source, currentType) {
     </form>
 
     <p><small>Source: ${source}</small></p>
-
     <h2>Results for: ${query}</h2>
     `;
 
@@ -311,7 +388,6 @@ function render(query, results, source, currentType) {
                 return `<div class="box"><div class="result-row">${thumbHtml}<div class="result-main"><div class="result-title"><a ${safeLink ? `href="${safeLink}" target="_blank" rel="noopener noreferrer"` : ''}>${r.title}</a></div><div class="result-meta">${safeLink || domain} • Type: web</div>${r.snippet?`<div class="result-snippet">${r.snippet}</div>`:''}</div></div></div>`;
             }).join('') : '<p><b>No web results.</b></p>'}
         </div>
-    </div>
     </body></html>`;
     return out;
 }
@@ -339,6 +415,23 @@ function safeRenderEnd(res, query, results, source, reqType) {
 const server = http.createServer((req, res) => {
 
     const q = url.parse(req.url, true);
+    // reset daily counters if day changed
+    checkResetUsage();
+
+    // Admin endpoint to set usage values (e.g. /admin/usage?provider=serp&used=24&limit=250)
+    if (q.pathname === '/admin/usage') {
+        const prov = q.query.provider;
+        const used = q.query.used !== undefined ? Number(q.query.used) : undefined;
+        const limit = q.query.limit !== undefined ? Number(q.query.limit) : undefined;
+        if (prov && API_USAGE.hasOwnProperty(prov)) {
+            if (!Number.isNaN(used)) API_USAGE[prov] = used;
+            if (!Number.isNaN(limit)) API_LIMITS[prov] = limit;
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            return res.end(JSON.stringify({ ok: true, provider: prov, used: API_USAGE[prov], limit: API_LIMITS[prov] }));
+        }
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ ok: false, error: 'invalid provider' }));
+    }
 
     // Serve the block page directly if requested (avoid redirect loop)
     if (q.pathname === '/blocked.html') {
@@ -427,12 +520,13 @@ const server = http.createServer((req, res) => {
         </head>
         <body>
             <div class="page-wrap">
-                <h1>🌟 Red Star Search (12.25)</h1>
+                <h1>🌟 Red Star Search (12.26)</h1>
                 <img class="logo" src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo">
                 <form action="/search" class="search-form">
                     <input name="q" class="search-input">
                     <button class="search-btn">Search</button>
                 </form>
+                ${getApiUsageHtml()}
                 <p class="note">Classic interface: Web 2.0 / WAP retro styling for this search UI only.</p>
             </div>
         </body>
@@ -444,6 +538,7 @@ const server = http.createServer((req, res) => {
     if (q.pathname === "/search") {
 
         const query = q.query.q || "";
+        const reqType = (q.query && q.query.type) ? String(q.query.type).toLowerCase() : 'web';
         console.log('Received search request for:', query, 'type:', reqType);
 
         // -----------------------------
