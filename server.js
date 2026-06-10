@@ -1,6 +1,8 @@
 const http = require("http");
 const https = require("https");
 const url = require("url");
+const fs = require('fs');
+const path = require('path');
 let getJson = null;
 try {
     const serp = require("serpapi");
@@ -252,7 +254,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.20)</h1>
+    <h1>🌟 Red Star Search (Ver 12.21)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -306,6 +308,19 @@ const server = http.createServer((req, res) => {
 
     const q = url.parse(req.url, true);
 
+    // Serve the block page directly if requested (avoid redirect loop)
+    if (q.pathname === '/blocked.html') {
+        const filePath = path.join(__dirname, 'blocked.html');
+        return fs.readFile(filePath, 'utf8', (err, data) => {
+            if (err) {
+                res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+                return res.end('Failed to load block page');
+            }
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            return res.end(data);
+        });
+    }
+
     // --- Browser blocking middleware based on User-Agent
     const ua = (req.headers['user-agent'] || '').toString();
 
@@ -317,7 +332,6 @@ const server = http.createServer((req, res) => {
     }
 
     const isIE = /MSIE |Trident\//i.test(ua);
-    const isOperaMini = /Opera Mini\/(\d+)/i.test(ua);
     const isOPR = /OPR\/(\d+)/i.test(ua);
     const isOperaOld = /Opera\/(\d+)/i.test(ua);
     const isChrome = /Chrome\/(\d+)/i.test(ua) && !/OPR\//i.test(ua) && !/Edg\//i.test(ua) && !/Chromium/i.test(ua) && !/CriOS/i.test(ua);
@@ -355,8 +369,8 @@ const server = http.createServer((req, res) => {
     else if (operaMiniMajor !== null && operaMiniMajor >= 10) blocked = true;
 
     if (blocked) {
-        res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" });
-        return res.end(`<html><body><h1>Access blocked</h1><p>Your browser is not supported by this site. Please use an older/legacy browser.</p></body></html>`);
+        res.writeHead(302, { 'Location': '/blocked.html' });
+        return res.end();
     }
 
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
@@ -364,7 +378,7 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.20)</h1>
+            <h1>🌟 Red Star Search (12.21)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
