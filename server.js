@@ -162,7 +162,6 @@ function rapidApiGet(host, path, callback) {
 
     const req = https.request(options, (res) => {
         let data = '';
-        // Log status for debugging
         if (res.statusCode && res.statusCode >= 400) {
             console.error('RapidAPI response status', res.statusCode, 'host', host, 'path', path);
         }
@@ -179,7 +178,6 @@ function rapidApiGet(host, path, callback) {
             } catch (e) {
                 console.error('RapidAPI parse error for host', host, 'path', path, 'error', e.message);
                 console.error('RapidAPI raw body:', data.slice(0,200));
-                // not JSON or parse error — surface error so caller can log and fallback
                 return callback(new Error('rapidapi parse error'), null);
             }
         });
@@ -254,7 +252,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.22)</h1>
+    <h1>🌟 Red Star Search (Ver 12.23)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -277,9 +275,10 @@ function render(query, results, source, currentType) {
             ${webResults.length ? webResults.slice(0,10).map(r => {
                 const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
                 const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
-                return `<div class="box"><div><small>Type: web</small></div><a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a><br><small>${safeLink || domain}</small>${r.snippet?`<p>${r.snippet}</p>`:''}</div>`;
+                return `<div class="box"><div class="result-title"><a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a></div><div class="result-meta">${safeLink || domain} • Type: web</div>${r.snippet?`<p>${r.snippet}</p>`:''}</div>`;
             }).join('') : '<p><b>No web results.</b></p>'}
         </div>
+    </div>
     </body></html>`;
     return out;
 }
@@ -378,7 +377,8 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.22)</h1>
+            <h1>🌟 Red Star Search (12.23)</h1>
+            <img src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo featuring a communist red star with hammer and sickle next to stylized yellow text mean Red Star Search! on a red background with a thin yellow border.">
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
