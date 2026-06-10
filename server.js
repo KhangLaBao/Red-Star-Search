@@ -374,7 +374,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.29)</h1>
+    <h1>🌟 Red Star Search (Ver 12.30)</h1>
     <a href="https://red-star-search.onrender.com" style="display:inline-block;margin-bottom:12px;">&larr; Go back to HomePage!</a>
 
     <form action="/search" class="search-form">
@@ -533,7 +533,7 @@ const server = http.createServer((req, res) => {
         </head>
         <body>
             <div class="page-wrap">
-                <h1>🌟 Red Star Search (12.29)</h1>
+                <h1>🌟 Red Star Search (12.30)</h1>
                 <img class="logo" src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo">
                 <form action="/search" class="search-form">
                     <input name="q" class="search-input" value="${escapeHtml(lastQuery)}">
