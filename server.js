@@ -254,7 +254,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.21)</h1>
+    <h1>🌟 Red Star Search (Ver 12.22)</h1>
 
     <form action="/search">
         <input name="q" value="${query}" style="width:300px;">
@@ -347,8 +347,8 @@ const server = http.createServer((req, res) => {
 
     let blocked = false;
 
-    // Internet Explorer: block all versions
-    if (isIE) blocked = true;
+    // Internet Explorer: allow all versions
+    if (isIE) blocked = false;
 
     // Google Chrome: block Chrome 51+
     else if (isChrome && chromeMajor !== null && chromeMajor >= 51) blocked = true;
@@ -378,7 +378,7 @@ const server = http.createServer((req, res) => {
     // HOME
     if (q.pathname === "/") {
         return res.end(`
-            <h1>🌟 Red Star Search (12.21)</h1>
+            <h1>🌟 Red Star Search (12.22)</h1>
             <form action="/search">
                 <input name="q">
                 <button>Search</button>
