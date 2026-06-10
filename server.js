@@ -31,6 +31,34 @@ let usageDay = (new Date()).toISOString().slice(0,10);
 // Track month for monthly resets (YYYY-MM)
 let usageMonth = (new Date()).toISOString().slice(0,7);
 
+// persistent usage file so state survives sleeps/restarts
+const USAGE_FILE = path.join(__dirname, 'api_usage.json');
+
+function loadUsageFromFile() {
+    try {
+        if (!fs.existsSync(USAGE_FILE)) return;
+        const raw = fs.readFileSync(USAGE_FILE, 'utf8');
+        const obj = JSON.parse(raw || '{}');
+        if (obj.api_usage) API_USAGE = Object.assign(API_USAGE, obj.api_usage);
+        if (obj.api_limits) Object.assign(API_LIMITS, obj.api_limits);
+        if (obj.usageDay) usageDay = obj.usageDay;
+        if (obj.usageMonth) usageMonth = obj.usageMonth;
+        if (obj.lastQuery) lastQuery = obj.lastQuery;
+        console.log('Loaded API usage from', USAGE_FILE);
+    } catch (e) {
+        console.error('Failed to load usage file:', e && e.message ? e.message : e);
+    }
+}
+
+function saveUsageToFile() {
+    try {
+        const obj = { api_usage: API_USAGE, api_limits: API_LIMITS, usageDay, usageMonth, lastQuery };
+        fs.writeFileSync(USAGE_FILE, JSON.stringify(obj, null, 2), 'utf8');
+    } catch (e) {
+        console.error('Failed to save usage file:', e && e.message ? e.message : e);
+    }
+}
+
 // remember last search query so the home page can show it
 let lastQuery = '';
 
@@ -58,18 +86,22 @@ function checkResetUsage() {
         API_USAGE = { serp: 0, rapid1: 0, rapid2: 0, rapid3: 0, wiki: 0 };
         usageMonth = month;
         usageDay = today;
+        saveUsageToFile();
         return;
     }
     // Daily reset (within same month)
     if (today !== usageDay) {
         API_USAGE = { serp: 0, rapid1: 0, rapid2: 0, rapid3: 0, wiki: 0 };
         usageDay = today;
+        saveUsageToFile();
     }
 }
 
 function recordUsage(provider) {
     if (!API_USAGE.hasOwnProperty(provider)) return;
     API_USAGE[provider] = (API_USAGE[provider] || 0) + 1;
+    // persist immediately so state survives sleep/restarts
+    try { saveUsageToFile(); } catch (e) {}
 }
 
 function getApiUsageHtml() {
@@ -332,7 +364,7 @@ function render(query, results, source, currentType) {
     <html>
     <head>
         <meta charset="utf-8">
-        <title>Red Star Search(12.31)</title>
+        <title>Red Star Search(12.32)</title>
         <style>
             /* Ancient 2000-era WAP / web2.0 inspired styles (for this page only) */
             body{
@@ -374,7 +406,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.31)</h1>
+    <h1>🌟 Red Star Search (Ver 12.32)</h1>
     <a href="https://red-star-search.onrender.com" style="display:inline-block;margin-bottom:12px;">&larr; Go back to HomePage!</a>
 
     <form action="/search" class="search-form">
@@ -439,6 +471,8 @@ const server = http.createServer((req, res) => {
         if (prov && API_USAGE.hasOwnProperty(prov)) {
             if (!Number.isNaN(used)) API_USAGE[prov] = used;
             if (!Number.isNaN(limit)) API_LIMITS[prov] = limit;
+            // persist changes
+            saveUsageToFile();
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
             return res.end(JSON.stringify({ ok: true, provider: prov, used: API_USAGE[prov], limit: API_LIMITS[prov] }));
         }
@@ -533,7 +567,7 @@ const server = http.createServer((req, res) => {
         </head>
         <body>
             <div class="page-wrap">
-                <h1>🌟 Red Star Search (12.31)</h1>
+                <h1>🌟 Red Star Search (12.32)</h1>
                 <img class="logo" src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo">
                 <form action="/search" class="search-form">
                     <input name="q" class="search-input" value="${escapeHtml(lastQuery)}">
@@ -588,6 +622,8 @@ const server = http.createServer((req, res) => {
     if (q.pathname === "/search") {
 
         const query = q.query.q || "";
+        // persist last query so homepage can show it after restarts
+        try { lastQuery = query; saveUsageToFile(); } catch (e) {}
         const reqType = (q.query && q.query.type) ? String(q.query.type).toLowerCase() : 'web';
         console.log('Received search request for:', query, 'type:', reqType);
 
@@ -703,6 +739,17 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason) => {
     console.error('Unhandled promise rejection:', reason && reason.stack ? reason.stack : reason);
 });
+
+// load persisted usage on startup
+loadUsageFromFile();
+
+// save usage on process exit signals
+function saveAndExit(code) {
+    try { saveUsageToFile(); } catch (e) {}
+    process.exit(code || 0);
+}
+process.on('SIGINT', () => saveAndExit(0));
+process.on('SIGTERM', () => saveAndExit(0));
 
 server.listen(PORT, "0.0.0.0", () => {
     console.log("🌟 Red Star Search Hybrid running");
