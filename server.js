@@ -255,9 +255,10 @@ function render(query, results, source, currentType) {
             }
             .page-wrap{ max-width:760px; margin:0 auto; }
             .logo{ display:block; margin-bottom:12px }
-            .search-form{ background:#f7f3e0; border:2px outset #fff; padding:8px; border-radius:4px }
-            .search-input{ width:72%; padding:6px; border:2px inset #999; background:#fff9e6; font-size:14px }
-            .search-btn{ padding:6px 10px; margin-left:6px; background:#ffdf80; border:2px solid #a06000; color:#000; font-weight:bold; cursor:pointer }
+            .search-form{ background:#f7f3e0; border:2px outset #fff; padding:8px; border-radius:4px; overflow:hidden }
+            /* Make input and button fit precisely — avoid inline whitespace gap */
+            .search-input{ display:inline-block; box-sizing:border-box; width:calc(100% - 110px); padding:6px; border:2px inset #999; background:#fff9e6; font-size:14px }
+            .search-btn{ display:inline-block; box-sizing:border-box; width:100px; padding:6px 8px; margin-left:6px; float:right; background:#ffdf80; border:2px solid #a06000; color:#000; font-weight:bold; cursor:pointer }
             .search-btn:active{ position:relative; top:1px }
 
             .note{ font-size:11px; color:#333 }
@@ -283,7 +284,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.24)</h1>
+    <h1>🌟 Red Star Search (Ver 12.25)</h1>
 
     <form action="/search" class="search-form">
         <input name="q" class="search-input" value="${query}">
@@ -306,7 +307,8 @@ function render(query, results, source, currentType) {
             ${webResults.length ? webResults.slice(0,10).map(r => {
                 const safeLink = (r.link && r.link !== 'undefined') ? r.link : '';
                 const domain = safeLink ? (new URL(safeLink, 'https://example.com')).hostname : '';
-                return `<div class="box"><div class="result-title"><a ${safeLink ? `href="${safeLink}" target="_blank"` : ''}>${r.title}</a></div><div class="result-meta">${safeLink || domain} • Type: web</div>${r.snippet?`<p>${r.snippet}</p>`:''}</div>`;
+                const thumbHtml = r.thumbnail ? `<div class="thumb"><img src="${r.thumbnail}" alt="thumbnail" style="max-width:64px;max-height:48px;border:0"></div>` : `<div class="thumb">&nbsp;</div>`;
+                return `<div class="box"><div class="result-row">${thumbHtml}<div class="result-main"><div class="result-title"><a ${safeLink ? `href="${safeLink}" target="_blank" rel="noopener noreferrer"` : ''}>${r.title}</a></div><div class="result-meta">${safeLink || domain} • Type: web</div>${r.snippet?`<div class="result-snippet">${r.snippet}</div>`:''}</div></div></div>`;
             }).join('') : '<p><b>No web results.</b></p>'}
         </div>
     </div>
@@ -417,15 +419,15 @@ const server = http.createServer((req, res) => {
                 body{ font-family: Verdana, Arial, Helvetica, sans-serif; background-color:#c0c0c0; color:#000; padding:14px; font-size:13px }
                 .page-wrap{ max-width:760px; margin:0 auto }
                 .logo{ display:block; margin-bottom:12px }
-                .search-form{ background:#f7f3e0; border:2px outset #fff; padding:8px; border-radius:4px }
-                .search-input{ width:72%; padding:6px; border:2px inset #999; background:#fff9e6; font-size:14px }
-                .search-btn{ padding:6px 10px; margin-left:6px; background:#ffdf80; border:2px solid #a06000; color:#000; font-weight:bold; cursor:pointer }
+                .search-form{ background:#f7f3e0; border:2px outset #fff; padding:8px; border-radius:4px; overflow:hidden }
+                .search-input{ display:inline-block; box-sizing:border-box; width:calc(100% - 110px); padding:6px; border:2px inset #999; background:#fff9e6; font-size:14px }
+                .search-btn{ display:inline-block; box-sizing:border-box; width:100px; padding:6px 8px; margin-left:6px; float:right; background:#ffdf80; border:2px solid #a06000; color:#000; font-weight:bold; cursor:pointer }
                 a{ color:#0000aa }
             </style>
         </head>
         <body>
             <div class="page-wrap">
-                <h1>🌟 Red Star Search (12.24)</h1>
+                <h1>🌟 Red Star Search (12.25)</h1>
                 <img class="logo" src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo">
                 <form action="/search" class="search-form">
                     <input name="q" class="search-input">
