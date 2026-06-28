@@ -364,7 +364,7 @@ function render(query, results, source, currentType) {
     <html>
     <head>
         <meta charset="utf-8">
-        <title>Red Star Search(12.32)</title>
+        <title>Red Star Search(12.34)</title>
         <style>
             /* Ancient 2000-era WAP / web2.0 inspired styles (for this page only) */
             body{
@@ -406,7 +406,7 @@ function render(query, results, source, currentType) {
     </head>
     <body>
 
-    <h1>🌟 Red Star Search (Ver 12.32)</h1>
+    <h1>🌟 Red Star Search (Ver 12.34)</h1>
     <a href="https://red-star-search.onrender.com" style="display:inline-block;margin-bottom:12px;">&larr; Go back to HomePage!</a>
 
     <form action="/search" class="search-form">
@@ -516,11 +516,18 @@ const server = http.createServer((req, res) => {
     const oprMajor = majorFrom(/OPR\/(\d+)/i);
     const operaMajor = majorFrom(/Opera\/(\d+)/i);
     const operaMiniMajor = majorFrom(/Opera Mini\/(\d+)/i);
+    const isEdge =
+    /Edg\//.test(ua) ||
+    /EdgA\//.test(ua) ||
+    /EdgiOS\//.test(ua);
 
     let blocked = false;
 
     // Internet Explorer: allow all versions
     if (isIE) blocked = false;
+
+    // Microsoft Edge: block ALL versions
+    else if (isEdge) blocked = true;
 
     // Google Chrome: block Chrome 51+
     else if (isChrome && chromeMajor !== null && chromeMajor >= 51) blocked = true;
@@ -567,7 +574,7 @@ const server = http.createServer((req, res) => {
         </head>
         <body>
             <div class="page-wrap">
-                <h1>🌟 Red Star Search (12.32)</h1>
+                <h1>🌟 Red Star Search (12.34)</h1>
                 <img class="logo" src="https://khanglabao.github.io/Red-Star-Search/imgs/logo.png" alt="Red Star Search logo">
                 <form action="/search" class="search-form">
                     <input name="q" class="search-input" value="${escapeHtml(lastQuery)}">
